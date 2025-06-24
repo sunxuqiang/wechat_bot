@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span>用户管理</span>
+                    <button class="btn btn-light btn-sm" onclick="refreshUserList()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>邮箱</th>
+                                    <th>注册时间</th>
+                                    <th>最后登录</th>
+                                    <th>管理员</th>
+                                    <th>上传权限</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userList">
+                                <!-- 用户列表将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户模态框 -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑用户</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="editUsername" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">邮箱</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">新密码（留空表示不修改）</label>
+                        <input type="password" class="form-control" id="editPassword">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editConfirmPassword" class="form-label">确认新密码</label>
+                        <input type="password" class="form-control" id="editConfirmPassword">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editIsAdmin">
+                            <label class="form-check-label" for="editIsAdmin">管理员权限</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editCanUpload">
+                            <label class="form-check-label" for="editCanUpload">上传权限</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/sweetalert2.min.js"></script>
+<script src="/static/js/axios.min.js"></script>
+<script>
+    // 加载用户列表
+    function loadUsers() {
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div></td></tr>';
+        
+        axios.get('/api/users')
+            .then(function(response) {
+                if (response.data && Array.isArray(response.data)) {
+                    let html = '';
+                    response.data.forEach(function(user) {
+                        html += `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>${new Date(user.created_at).toLocaleString()}</td>
+                                <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '从未登录'}</td>
+                                <td>
+                                    <span class="badge ${user.is_admin ? 'bg-success' : 'bg-secondary'}">
+                                        ${user.is_admin ? '是' : '否'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge ${user.can_upload ? 'bg-success' : 'bg-secondary'}">
+                                        ${user.can_upload ? '是' : '否'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary me-1" onclick="editUser(${user.id})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    ${user.username !== 'admin' ? `
+                                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    userList.innerHTML = html;
+                } else {
+                    userList.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无用户</td></tr>';
+                }
+            })
+            .catch(function(error) {
+                let errorMessage = '加载用户列表失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                userList.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            ${errorMessage}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // 编辑用户
+    function editUser(userId) {
+        showLoading('加载用户信息...');
+        
+        axios.get(`/api/users/${userId}`)
+            .then(function(response) {
+                const user = response.data;
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editConfirmPassword').value = '';
+                document.getElementById('editIsAdmin').checked = user.is_admin;
+                document.getElementById('editCanUpload').checked = user.can_upload;
+                
+                // 如果是admin用户，禁用管理员权限复选框
+                const isAdminCheckbox = document.getElementById('editIsAdmin');
+                if (user.username === 'admin') {
+                    isAdminCheckbox.checked = true;
+                    isAdminCheckbox.disabled = true;
+                } else {
+                    isAdminCheckbox.disabled = false;
+                }
+                
+                new bootstrap.Modal(document.getElementById('editUserModal')).show();
+            })
+            .catch(function(error) {
+                let errorMessage = '加载用户信息失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                showToast('错误', errorMessage, 'error');
+            })
+            .finally(function() {
+                hideLoading();
+            });
+    }
+    
+    // 保存用户
+    function saveUser() {
+        const userId = document.getElementById('editUserId').value;
+        const password = document.getElementById('editPassword').value;
+        const confirmPassword = document.getElementById('editConfirmPassword').value;
+        
+        // 如果输入了密码，验证两次输入是否一致
+        if (password) {
+            if (password !== confirmPassword) {
+                showToast('错误', '两次输入的密码不一致', 'error');
+                return;
+            }
+        }
+        
+        const data = {
+            email: document.getElementById('editEmail').value,
+            is_admin: document.getElementById('editIsAdmin').checked,
+            can_upload: document.getElementById('editCanUpload').checked
+        };
+        
+        // 只有当密码不为空时才添加到请求数据中
+        if (password) {
+            data.password = password;
+        }
+        
+        showLoading('保存用户信息...');
+        
+        axios.put(`/api/users/${userId}`, data)
+            .then(function(response) {
+                showToast('成功', '用户信息已更新', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadUsers();
+            })
+            .catch(function(error) {
+                let errorMessage = '保存用户信息失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                showToast('错误', errorMessage, 'error');
+            })
+            .finally(function() {
+                hideLoading();
+            });
+    }
+    
+    // 删除用户
+    function deleteUser(userId) {
+        if (!confirm('确定要删除这个用户吗？此操作不可恢复！')) {
+            return;
+        }
+        
+        showLoading('删除用户...');
+        
+        axios.delete(`/api/users/${userId}`)
+            .then(function(response) {
+                showToast('成功', '用户已删除', 'success');
+                loadUsers();
+            })
+            .catch(function(error) {
+                let errorMessage = '删除用户失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                showToast('错误', errorMessage, 'error');
+            })
+            .finally(function() {
+                hideLoading();
+            });
+    }
+    
+    // 刷新用户列表
+    function refreshUserList() {
+        loadUsers();
+    }
+    
+    // 页面加载完成后加载用户列表
+    document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+{% endblock %} 

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .main-content {
+            margin-left: 16.666667%;
+        }
+        .nav-link {
+            color: #333;
+            padding: 0.5rem 1rem;
+        }
+        .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+        .nav-link.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="bi bi-house"></i> 首页
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showSection('user-management')">
+                                <i class="bi bi-people"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('prompt-management')">
+                                <i class="bi bi-chat-quote"></i> 提示词管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/permission-management">
+                                <i class="bi bi-shield-check"></i> 权限管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main role="main" class="col-md-10 ml-sm-auto px-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" id="pageTitle">用户管理</h1>
+                </div>
+
+                <!-- 用户管理部分 -->
+                <div id="user-management" class="content-section active">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">管理员账户</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>用户名</th>
+                                            <th>上次登录时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>admin</td>
+                                            <td id="lastLoginTime">-</td>
+                                            <td>
+                                                <button class="btn btn-warning btn-sm" onclick="resetPassword()">
+                                                    重置密码
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提示词管理部分 -->
+                <div id="prompt-management" class="content-section">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        提示词管理功能已移至专门的页面。点击下面的按钮进入提示词管理页面。
+                    </div>
+                    <a href="/prompt-management" class="btn btn-primary">
+                        <i class="bi bi-chat-quote"></i> 进入提示词管理
+                    </a>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 重置密码模态框 -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resetPasswordForm">
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">确认密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitResetPassword()">确认重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/sweetalert2.min.js"></script>
+    <script>
+        // 页面加载时获取最后登录时间
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchLastLoginTime();
+        });
+
+        // 显示不同的内容区域
+        function showSection(sectionId) {
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 移除所有导航链接的active类
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // 显示选中的内容区域
+            document.getElementById(sectionId).classList.add('active');
+            
+            // 为当前导航链接添加active类
+            event.target.classList.add('active');
+            
+            // 更新页面标题
+            const titles = {
+                'user-management': '用户管理',
+                'prompt-management': '提示词管理'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId] || '系统管理';
+        }
+
+        // 获取最后登录时间
+        function fetchLastLoginTime() {
+            fetch('/api/admin/last-login')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('lastLoginTime').textContent = data.last_login || '-';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // 打开重置密码模态框
+        function resetPassword() {
+            const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            modal.show();
+        }
+
+        // 提交重置密码
+        function submitResetPassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '错误',
+                    text: '两次输入的密码不一致'
+                });
+                return;
+            }
+
+            fetch('/api/admin/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    new_password: newPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '成功',
+                        text: '密码重置成功'
+                    }).then(() => {
+                        // 关闭模态框并清空表单
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+                        modal.hide();
+                        document.getElementById('resetPasswordForm').reset();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '错误',
+                        text: data.message || '密码重置失败'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: '错误',
+                    text: '服务器错误，请稍后重试'
+                });
+            });
+        }
+    </script>
+</body>
+</html> 

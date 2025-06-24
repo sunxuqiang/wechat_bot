@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span>权限管理</span>
+                    <button class="btn btn-light btn-sm" onclick="refreshPermissionList()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>邮箱</th>
+                                    <th>管理员权限</th>
+                                    <th>上传权限</th>
+                                    <th>注册时间</th>
+                                    <th>最后登录</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="permissionList">
+                                <!-- 权限列表将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑权限模态框 -->
+<div class="modal fade" id="editPermissionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑权限</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPermissionForm">
+                    <input type="hidden" id="editUserId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="editUsername" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editIsAdmin">
+                            <label class="form-check-label" for="editIsAdmin">管理员权限</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editCanUpload">
+                            <label class="form-check-label" for="editCanUpload">上传权限</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="savePermission()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/sweetalert2.min.js"></script>
+<script src="/static/js/axios.min.js"></script>
+<script>
+    // 加载权限列表
+    function loadPermissions() {
+        const permissionList = document.getElementById('permissionList');
+        permissionList.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div></td></tr>';
+        
+        axios.get('/api/permissions')
+            .then(function(response) {
+                if (response.data && Array.isArray(response.data)) {
+                    let html = '';
+                    response.data.forEach(function(user) {
+                        // 不显示 admin 用户
+                        if (user.username !== 'admin') {
+                            html += `
+                                <tr>
+                                    <td>${user.id}</td>
+                                    <td>${user.username}</td>
+                                    <td>${user.email}</td>
+                                    <td>
+                                        <span class="badge ${user.is_admin ? 'bg-success' : 'bg-secondary'}">
+                                            ${user.is_admin ? '是' : '否'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${user.can_upload ? 'bg-success' : 'bg-secondary'}">
+                                            ${user.can_upload ? '是' : '否'}
+                                        </span>
+                                    </td>
+                                    <td>${new Date(user.created_at).toLocaleString()}</td>
+                                    <td>${user.last_login ? new Date(user.last_login).toLocaleString() : '从未登录'}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" onclick="editPermission(${user.id})">
+                                            <i class="bi bi-pencil"></i>
+                                            编辑权限
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    });
+                    permissionList.innerHTML = html || '<tr><td colspan="8" class="text-center text-muted">暂无用户</td></tr>';
+                } else {
+                    permissionList.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无用户</td></tr>';
+                }
+            })
+            .catch(function(error) {
+                let errorMessage = '加载权限列表失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                permissionList.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            ${errorMessage}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // 编辑权限
+    function editPermission(userId) {
+        showLoading('加载用户信息...');
+        
+        axios.get(`/api/users/${userId}`)
+            .then(function(response) {
+                const user = response.data;
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editIsAdmin').checked = user.is_admin;
+                document.getElementById('editCanUpload').checked = user.can_upload;
+                
+                // 如果是admin用户，禁用管理员权限复选框
+                const isAdminCheckbox = document.getElementById('editIsAdmin');
+                if (user.username === 'admin') {
+                    isAdminCheckbox.checked = true;
+                    isAdminCheckbox.disabled = true;
+                } else {
+                    isAdminCheckbox.disabled = false;
+                }
+                
+                new bootstrap.Modal(document.getElementById('editPermissionModal')).show();
+            })
+            .catch(function(error) {
+                let errorMessage = '加载用户信息失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                showToast('错误', errorMessage, 'error');
+            })
+            .finally(function() {
+                hideLoading();
+            });
+    }
+    
+    // 保存权限
+    function savePermission() {
+        const userId = document.getElementById('editUserId').value;
+        const data = {
+            is_admin: document.getElementById('editIsAdmin').checked,
+            can_upload: document.getElementById('editCanUpload').checked
+        };
+        
+        showLoading('保存权限信息...');
+        
+        axios.put(`/api/permissions/${userId}`, data)
+            .then(function(response) {
+                showToast('成功', '权限已更新', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editPermissionModal')).hide();
+                loadPermissions();
+            })
+            .catch(function(error) {
+                let errorMessage = '保存权限信息失败';
+                if (error.response && error.response.data && error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
+                showToast('错误', errorMessage, 'error');
+            })
+            .finally(function() {
+                hideLoading();
+            });
+    }
+    
+    // 刷新权限列表
+    function refreshPermissionList() {
+        loadPermissions();
+    }
+    
+    // 页面加载完成后加载权限列表
+    document.addEventListener('DOMContentLoaded', loadPermissions);
+</script>
+{% endblock %} 
