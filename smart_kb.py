@@ -2,6 +2,7 @@ import os
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 import json
+import pickle
 import numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, UnstructuredPDFLoader
@@ -11,6 +12,9 @@ from sentence_transformers import SentenceTransformer
 import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
 from document_manager import DocumentManager
+import traceback
+from config_loader import config
+from file_processors.processor_factory import ProcessorFactory
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,6 +29,7 @@ class FaissVectorStore:
             dimension: 向量维度，默认384维（对TF-IDF模式生效）
         """
         self.texts = []
+        self.metadata = []  # 初始化元数据列表
         self.using_tfidf = False
         self.similarity_threshold = 0.1
         self.dimension = dimension
@@ -78,12 +83,13 @@ class FaissVectorStore:
         text = text.lower()
         return text
         
-    def add(self, texts: List[str]) -> None:
+    def add(self, texts: List[str], metadata: List[Dict] = None) -> None:
         """
         添加文本到向量存储
         
         Args:
             texts: 要添加的文本列表
+            metadata: 元数据列表，与文本列表一一对应
         """
         if not texts:
             return
@@ -129,6 +135,14 @@ class FaissVectorStore:
             # 保存文本
             self.texts.extend(texts)  # 保存原始文本
             logger.info(f"成功添加 {len(texts)} 条文本")
+            
+            # 保存元数据
+            if metadata:
+                self.metadata.extend(metadata)
+            else:
+                # 如果没有提供元数据，创建默认元数据
+                default_metadata = [{"type": "text"} for _ in texts]
+                self.metadata.extend(default_metadata)
             
         except Exception as e:
             logger.error(f"添加文本失败: {str(e)}")
@@ -211,6 +225,7 @@ class FaissVectorStore:
             # 保存其他数据
             data = {
                 "texts": self.texts,
+                "metadata": self.metadata,  # 保存元数据
                 "using_tfidf": self.using_tfidf,
                 "dimension": self.dimension,
                 "similarity_threshold": self.similarity_threshold
@@ -243,6 +258,7 @@ class FaissVectorStore:
                 data = pickle.load(f)
                 
             self.texts = data["texts"]
+            self.metadata = data.get("metadata", [])  # 兼容旧版本，如果没有元数据则使用空列表
             self.using_tfidf = data["using_tfidf"]
             self.dimension = data["dimension"]
             self.similarity_threshold = data.get("similarity_threshold", 0.1)
@@ -268,15 +284,37 @@ class SmartKnowledgeBase:
         self.vector_store_path = vector_store_path
         self.document_manager = DocumentManager()
         
+        # 初始化文件处理器工厂
+        self.processor_factory = ProcessorFactory()
+        
         # 确保向量存储目录存在
         os.makedirs(vector_store_path, exist_ok=True)
         
+        # 从配置文件获取chunk设置
+        chunk_size = config.getint('vector_store', 'chunk_size', 1000)
+        chunk_overlap = config.getint('vector_store', 'chunk_overlap', 200)
+        
         # 初始化文本分割器
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=50,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             length_function=len,
-            separators=["\n\n", "\n", "。", "！", "？", ".", "!", "?"]
+            separators=[
+                "\n\n",  # 段落分隔
+                "\n",    # 换行
+                "。",    # 中文句号
+                "！",    # 中文感叹号
+                "？",    # 中文问号
+                "；",    # 中文分号
+                "：",    # 中文冒号
+                "，",    # 中文逗号
+                ".",     # 英文句号
+                "!",     # 英文感叹号
+                "?",     # 英文问号
+                ";",     # 英文分号
+                ":",     # 英文冒号
+                ",",     # 英文逗号
+            ]
         )
         
         # 初始化向量存储
@@ -288,13 +326,29 @@ class SmartKnowledgeBase:
             self.vector_store.add(["初始化向量库"])
             self.vector_store.save(vector_store_path)
         
-    def add_texts(self, texts: List[str]) -> bool:
+    def add_texts(self, texts: List[str], metadata: List[Dict] = None) -> bool:
         """
         添加文本到知识库
+        
+        Args:
+            texts: 文本列表
+            metadata: 元数据列表，与文本列表一一对应
+            
+        Returns:
+            bool: 是否添加成功
         """
         try:
+            # 确保文本和元数据长度一致
+            if metadata and len(texts) != len(metadata):
+                raise ValueError("文本列表和元数据列表长度不一致")
+            
+            # 如果没有提供元数据，创建默认元数据
+            if not metadata:
+                metadata = [{"type": "text"} for _ in texts]
+            
             # 添加到向量存储
-            self.vector_store.add(texts)
+            self.vector_store.add(texts, metadata)
+            
             # 保存向量存储
             self.vector_store.save(self.vector_store_path)
             return True
@@ -313,30 +367,25 @@ class SmartKnowledgeBase:
             bool: 是否添加成功
         """
         try:
-            # 根据文件类型选择加载器
-            file_path = Path(file_path)
-            if file_path.suffix.lower() == '.pdf':
-                loader = UnstructuredPDFLoader(str(file_path))
-            else:
-                loader = TextLoader(str(file_path), encoding='utf-8')
-                
-            # 加载文档
-            documents = loader.load()
+            # 使用文件处理器处理文档
+            chunks = self.process_file(file_path)
+            if not chunks:
+                logger.warning(f"文件处理失败: {file_path}")
+                return False
             
-            # 分割文本
-            texts = self.text_splitter.split_documents(documents)
-            
-            # 获取文本内容
-            text_contents = [doc.page_content for doc in texts]
+            # 提取文本和元数据
+            texts = [chunk["text"] for chunk in chunks]
+            metadata = [chunk["metadata"] for chunk in chunks]
             
             # 添加到向量存储
-            if self.add_texts(text_contents):
+            if self.add_texts(texts, metadata):
                 # 添加到文档管理器
                 return self.document_manager.add_document(str(file_path), len(texts))
             return False
             
         except Exception as e:
-            print(f"添加文档失败: {e}")
+            logger.error(f"添加文档失败: {e}")
+            logger.error(traceback.format_exc())
             return False
             
     def remove_document(self, file_path: str) -> bool:
@@ -486,6 +535,28 @@ class SmartKnowledgeBase:
         except Exception as e:
             print(f"加载知识库失败: {e}")
             
+    def process_file(self, file_path: str) -> List[Dict[str, Any]]:
+        """处理文件"""
+        try:
+            # 获取适合的处理器
+            processor = self.processor_factory.get_processor(file_path)
+            if not processor:
+                logger.warning(f"不支持的文件类型: {file_path}")
+                return []
+            
+            # 处理文件
+            chunks = processor.process(file_path)
+            if not chunks:
+                logger.warning(f"文件处理失败: {file_path}")
+                return []
+            
+            return chunks
+        
+        except Exception as e:
+            logger.error(f"处理文件失败: {str(e)}")
+            logger.error(traceback.format_exc())
+            return []
+
 # 测试代码
 if __name__ == "__main__":
     kb = SmartKnowledgeBase()

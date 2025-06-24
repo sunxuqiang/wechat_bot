@@ -59,7 +59,7 @@ class FaissVectorStore:
             self.document_embeddings = None
             self.index = None
             self.model = None
-            self.similarity_threshold = 0.3
+            self.similarity_threshold = 0.3  # 调高基础相似度阈值到0.3
             self.max_retries = 3  # 最大重试次数
             self.retry_delay = 1  # 初始重试延迟（秒）
             self.initialize_model()
@@ -205,7 +205,7 @@ class FaissVectorStore:
             
         # 计算匹配率
         match_rate = len(matched_words) / len(query_words)
-        if match_rate < 0.3:  # 如果匹配率过低，直接返回0
+        if match_rate < 0.3:  # 调高匹配率阈值到30%
             return 0.0
             
         # 计算位置得分
@@ -331,9 +331,11 @@ class FaissVectorStore:
 
     @network_error_handler
     def encode_text(self, text: str) -> np.ndarray:
-        """对文本进行编码，带有错误处理"""
+        """对单个文本进行编码，带有错误处理"""
         try:
-            return self.model.encode([text], convert_to_tensor=True)[0].cpu().numpy()
+            if not text or not text.strip():
+                raise ValueError("文本为空")
+            return self.model.encode([text.strip()], convert_to_tensor=True)[0].cpu().numpy()
         except Exception as e:
             logger.error(f"文本编码失败: {str(e)}")
             raise
@@ -345,12 +347,19 @@ class FaissVectorStore:
                 logger.warning("没有文本需要添加")
                 return False
                 
-            logger.info(f"开始处理 {len(texts)} 个文本")
+            # 过滤空文本
+            valid_texts = [text.strip() for text in texts if text and text.strip()]
+            if not valid_texts:
+                logger.warning("所有文本都为空，跳过添加")
+                return False
+                
+            logger.info(f"开始处理 {len(valid_texts)} 个有效文本")
             
             # 生成向量嵌入
             logger.info("生成文档向量...")
             try:
-                embeddings = self.encode_text(texts)
+                # 使用模型批量编码文本
+                embeddings = self.model.encode(valid_texts, convert_to_tensor=True).cpu().numpy()
                 logger.info(f"生成了 {len(embeddings)} 个向量")
                 
             except Exception as e:
@@ -367,8 +376,15 @@ class FaissVectorStore:
                     
                 # 保存文档和元数据
                 if metadata is None:
-                    metadata = [{}] * len(texts)
-                self.documents.extend(list(zip(texts, metadata)))
+                    metadata = [{}] * len(valid_texts)
+                elif len(metadata) != len(valid_texts):
+                    # 如果元数据长度不匹配，调整元数据
+                    if len(metadata) > len(valid_texts):
+                        metadata = metadata[:len(valid_texts)]
+                    else:
+                        metadata.extend([{}] * (len(valid_texts) - len(metadata)))
+                        
+                self.documents.extend(list(zip(valid_texts, metadata)))
                 logger.info(f"文档已保存，当前总数: {len(self.documents)}")
                 
                 return True
@@ -475,14 +491,14 @@ class FaissVectorStore:
                 'semantic_coherence': semantic_coherence
             }
             
-        if vector_similarity < 0.3:  # 如果向量相似度过低
+        if vector_similarity < 0.3:  # 调高向量相似度阈值到0.3
             return 0.0, {
                 'vector_similarity': vector_similarity,
                 'keyword_importance': keyword_importance,
                 'semantic_coherence': semantic_coherence
             }
             
-        if semantic_coherence < 0.3:  # 如果语义连贯性过低
+        if semantic_coherence < 0.3:  # 调高语义连贯性阈值到0.3
             return 0.0, {
                 'vector_similarity': vector_similarity,
                 'keyword_importance': keyword_importance,
@@ -512,7 +528,7 @@ class FaissVectorStore:
         )
         
         # 最终的相关性检查
-        if combined_score < 0.4:  # 提高最终分数阈值
+        if combined_score < 0.4:  # 调高最终分数阈值到0.4
             return 0.0, scores
             
         return combined_score, scores
@@ -575,8 +591,8 @@ class FaissVectorStore:
                         # 2. 关键词匹配必须达到一定程度
                         # 3. 加权分数必须达到最终阈值
                         if (vector_similarity >= self.similarity_threshold and 
-                            keyword_match >= 0.3 and  # 至少30%的查询关键词要匹配
-                            weighted_score >= 0.4):  # 最终分数阈值提高到0.4
+                            keyword_match >= 0.3 and  # 调高关键词匹配阈值到30%
+                            weighted_score >= 0.4):  # 调高最终分数阈值到0.4
                             
                             results.append((
                                 text, 
@@ -785,5 +801,88 @@ class FaissVectorStore:
             
         except Exception as e:
             logger.error(f"删除文档失败: {str(e)}")
+            logger.error(traceback.format_exc())
+            return False
+
+    def delete_text_blocks(self, indices: List[int]) -> bool:
+        """删除指定索引的文本块
+        
+        Args:
+            indices: 要删除的文本块索引列表（从0开始）
+            
+        Returns:
+            bool: 删除是否成功
+        """
+        try:
+            if not indices:
+                logger.warning("没有指定要删除的文本块索引")
+                return True
+            
+            # 验证索引范围
+            max_index = len(self.documents) - 1
+            invalid_indices = [idx for idx in indices if idx < 0 or idx > max_index]
+            if invalid_indices:
+                logger.error(f"无效的索引: {invalid_indices}")
+                return False
+            
+            # 按降序排序索引，避免删除时索引变化
+            sorted_indices = sorted(indices, reverse=True)
+            
+            # 删除指定索引的文本块
+            new_documents = []
+            new_embeddings = []
+            
+            for i, (text, metadata) in enumerate(self.documents):
+                if i not in indices:
+                    new_documents.append((text, metadata))
+                    if self.document_embeddings is not None:
+                        new_embeddings.append(self.document_embeddings[i])
+            
+            # 更新文档列表和向量
+            self.documents = new_documents
+            if new_embeddings:
+                self.document_embeddings = np.array(new_embeddings)
+                
+                # 重建索引
+                self.index.reset()
+                if len(new_embeddings) > 0:
+                    self.index.add(self.document_embeddings)
+                    
+            logger.info(f"成功删除 {len(indices)} 个文本块，索引: {indices}")
+            logger.info(f"删除后的统计信息: {self.get_statistics()}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"删除文本块失败: {str(e)}")
+            logger.error(traceback.format_exc())
+            return False
+
+    def update_text_block(self, index: int, new_text: str) -> bool:
+        """
+        更新指定索引的文本块内容，并同步更新向量。
+        Args:
+            index: 文本块索引（从0开始）
+            new_text: 新的文本内容
+        Returns:
+            bool: 是否更新成功
+        """
+        try:
+            if index < 0 or index >= len(self.documents):
+                logger.error(f"文本块索引超出范围: {index}")
+                return False
+            # 更新文本内容
+            old_text, metadata = self.documents[index]
+            self.documents[index] = (new_text, metadata)
+            # 重新生成向量
+            embedding = self.model.encode([new_text], convert_to_tensor=True).cpu().numpy()[0]
+            self.document_embeddings[index] = embedding
+            # 重建FAISS索引
+            self.index.reset()
+            if len(self.document_embeddings) > 0:
+                self.index.add(self.document_embeddings)
+            logger.info(f"成功更新文本块索引 {index} 的内容和向量")
+            return True
+        except Exception as e:
+            logger.error(f"更新文本块失败: {str(e)}")
             logger.error(traceback.format_exc())
             return False 

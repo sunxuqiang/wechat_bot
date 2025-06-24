@@ -1,3 +1,4 @@
+print('当前加载的 document_processor.py 路径:', __file__)
 import os
 import pandas as pd
 from typing import List, Dict, Any, Optional
@@ -11,6 +12,8 @@ from dataclasses import dataclass
 from tqdm import tqdm
 from loguru import logger
 import traceback
+from ai_chunk_service import AIChunkService
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -195,12 +198,31 @@ class DocumentProcessor:
         """处理Word文件"""
         chunks = []
         try:
-            doc = Document(file_path)
+            # 根据文件扩展名选择处理方法
+            file_ext = os.path.splitext(file_path)[1].lower()
+            
+            if file_ext == '.docx':
+                doc = Document(file_path)
+                content = ""
+                for para in doc.paragraphs:
+                    content += para.text + "\n"
+            elif file_ext == '.doc':
+                # 尝试多种方法读取.doc文件
+                content = self._read_doc_file(file_path)
+            else:
+                raise ValueError(f"Unsupported file extension: {file_ext}")
+            
+            if not content.strip():
+                logger.warning(f"Word文件内容为空: {file_path}")
+                return []
+            
+            # 按段落分割并创建块
             current_chunk = []
             current_length = 0
             
-            for para in doc.paragraphs:
-                text = para.text.strip()
+            paragraphs = content.split('\n')
+            for para in paragraphs:
+                text = para.strip()
                 if not text:
                     continue
                     
@@ -233,57 +255,194 @@ class DocumentProcessor:
             raise
             
         return chunks
+    
+    def _read_doc_file(self, file_path: str) -> str:
+        """读取.doc文件"""
+        try:
+            # 首先尝试使用python-docx2txt库
+            try:
+                import docx2txt
+                content = docx2txt.process(file_path)
+                if content and content.strip():
+                    logger.info("使用docx2txt成功读取.doc文件")
+                    return content
+            except Exception as e:
+                logger.warning(f"docx2txt读取.doc文件失败: {str(e)}")
+            
+            # 尝试使用olefile读取.doc文件
+            try:
+                import olefile
+                if olefile.isOleFile(file_path):
+                    ole = olefile.OleFileIO(file_path)
+                    # 尝试读取WordDocument流
+                    if ole.exists('WordDocument'):
+                        word_doc = ole.openstream('WordDocument').read()
+                        # 尝试读取内容
+                        content = self._extract_text_from_ole(ole)
+                        if content and content.strip():
+                            logger.info("使用olefile成功读取.doc文件")
+                            return content
+                    ole.close()
+            except ImportError:
+                logger.warning("olefile库未安装")
+            except Exception as e:
+                logger.warning(f"olefile读取.doc文件失败: {str(e)}")
+            
+            # 尝试使用mammoth库
+            try:
+                import mammoth
+                with open(file_path, "rb") as docx_file:
+                    result = mammoth.extract_raw_text(docx_file)
+                    if result.value and result.value.strip():
+                        logger.info("使用mammoth成功读取.doc文件")
+                        return result.value
+            except ImportError:
+                logger.warning("mammoth库未安装")
+            except Exception as e:
+                logger.warning(f"mammoth读取.doc文件失败: {str(e)}")
+            
+            # 尝试使用antiword（Linux/Unix工具）
+            try:
+                import subprocess
+                result = subprocess.run(['antiword', file_path], 
+                                      capture_output=True, text=True, timeout=30)
+                if result.returncode == 0 and result.stdout.strip():
+                    logger.info("使用antiword成功读取.doc文件")
+                    return result.stdout
+            except (ImportError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+                logger.warning(f"antiword未安装或执行失败: {str(e)}")
+            
+            # 尝试使用catdoc（Linux/Unix工具）
+            try:
+                import subprocess
+                result = subprocess.run(['catdoc', file_path], 
+                                      capture_output=True, text=True, timeout=30)
+                if result.returncode == 0 and result.stdout.strip():
+                    logger.info("使用catdoc成功读取.doc文件")
+                    return result.stdout
+            except (ImportError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+                logger.warning(f"catdoc未安装或执行失败: {str(e)}")
+            
+            # 如果所有方法都失败，抛出详细的异常信息
+            error_msg = (
+                "无法读取.doc文件。请尝试以下解决方案：\n"
+                "1. 将.doc文件转换为.docx格式（推荐）：\n"
+                "   - 用Microsoft Word打开文件，另存为.docx格式\n"
+                "   - 或使用在线转换工具：https://convertio.co/doc-docx/\n"
+                "2. 在Windows系统上安装LibreOffice，然后使用命令行转换：\n"
+                "   soffice --headless --convert-to docx:MS Word 2007 XML 文件路径.doc\n"
+                "3. 使用WPS Office或其他支持.doc的办公软件打开并另存为.docx\n"
+                "4. 如果文件很重要，建议使用Microsoft Word进行转换"
+            )
+            raise Exception(error_msg)
+            
+        except Exception as e:
+            logger.error(f"读取.doc文件失败: {str(e)}")
+            raise
+    
+    def _extract_text_from_ole(self, ole):
+        """从OLE文件中提取文本"""
+        try:
+            content = ""
+            
+            # 尝试读取不同的流
+            streams_to_try = ['WordDocument', 'Contents', '1Table', '0Table']
+            
+            for stream_name in streams_to_try:
+                if ole.exists(stream_name):
+                    try:
+                        stream = ole.openstream(stream_name)
+                        data = stream.read()
+                        # 尝试解码为文本
+                        try:
+                            text = data.decode('utf-8', errors='ignore')
+                            # 清理文本
+                            text = self._clean_ole_text(text)
+                            if text.strip():
+                                content += text + "\n"
+                        except:
+                            # 如果UTF-8失败，尝试其他编码
+                            try:
+                                text = data.decode('gbk', errors='ignore')
+                                text = self._clean_ole_text(text)
+                                if text.strip():
+                                    content += text + "\n"
+                            except:
+                                pass
+                        stream.close()
+                    except:
+                        continue
+            
+            return content
+            
+        except Exception as e:
+            logger.warning(f"从OLE文件提取文本失败: {str(e)}")
+            return ""
+    
+    def _clean_ole_text(self, text):
+        """清理从OLE文件提取的文本"""
+        # 移除控制字符
+        import re
+        text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+        # 移除多余的空白字符
+        text = re.sub(r'\s+', ' ', text)
+        return text.strip()
 
     def _process_pdf(self, file_path: str) -> List[DocumentChunk]:
-        """处理PDF文件"""
+        """处理PDF文件（全文件合并，AI分块，特殊字符清理，循环调用AI）"""
         chunks = []
         try:
+            print('!!! PDF DEBUG ENTRY !!!')
             reader = PdfReader(file_path)
-            current_chunk = []
-            current_length = 0
-            
-            for page_num, page in enumerate(reader.pages, 1):
-                text = page.extract_text().strip()
-                if not text:
-                    continue
-                
-                # 按句子分割文本
-                sentences = text.split('。')
-                
-                for sentence in sentences:
-                    if not sentence.strip():
-                        continue
-                        
-                    # 如果当前块加上新句子超过块大小，创建新块
-                    if current_length + len(sentence) > self.chunk_size:
-                        if current_chunk:
-                            content = "。".join(current_chunk) + "。"
+            ai_service = AIChunkService()
+            max_ai_chars = int(3000)
+            # 1. 合并所有页文本
+            all_text = ''
+            for page in reader.pages:
+                text = page.extract_text()
+                if text:
+                    all_text += text + '\n'
+            # 2. 清理特殊字符
+            all_text = re.sub(r'[\u2000-\u200F\u2028-\u202F\u205F-\u206F\uFEFF\x00-\x1F]', '', all_text)
+            all_text = all_text.strip()
+            logger.info(f"all_text type: {type(all_text)}, len: {len(all_text)}")
+            if not isinstance(all_text, str):
+                raise TypeError(f"all_text is not str, but {type(all_text)}")
+            if not all_text:
+                return []
+            # 3. 按最大长度分块循环调用AI
+            start = 0
+            while start < len(all_text):
+                start = int(start)
+                end = int(start + int(max_ai_chars))
+                logger.info(f"PDF分块循环: start={start}, end={end}, max_ai_chars={max_ai_chars}, type(start)={type(start)}, type(end)={type(end)}")
+                assert isinstance(start, int) and isinstance(end, int), f'start={start}, end={end}, type(start)={type(start)}, type(end)={type(end)}'
+                sub_text = all_text[start:end]
+                # 保证不截断句子，向后扩展到最近的句号
+                if end < len(all_text):
+                    last_punc = max(sub_text.rfind('。'), sub_text.rfind('.'), sub_text.rfind('\n'))
+                    if last_punc > 0 and last_punc > max_ai_chars * 0.5:
+                        sub_text = sub_text[:last_punc+1]
+                # 4. 调用AI分块
+                ai_chunks = ai_service.chunk_with_ai(sub_text)
+                if ai_chunks:
+                    for ai_chunk in ai_chunks:
+                        content = ai_chunk.get('content', '').strip()
+                        if content:
                             metadata = {
                                 'source': file_path,
-                                'page_number': page_num,
-                                'type': 'pdf'
+                                'type': 'pdf_ai',
                             }
                             chunks.append(DocumentChunk(content=content, metadata=metadata))
-                        current_chunk = [sentence]
-                        current_length = len(sentence)
-                    else:
-                        current_chunk.append(sentence)
-                        current_length += len(sentence)
-            
-            # 处理最后一个块
-            if current_chunk:
-                content = "。".join(current_chunk) + "。"
-                metadata = {
-                    'source': file_path,
-                    'page_number': page_num,
-                    'type': 'pdf'
-                }
-                chunks.append(DocumentChunk(content=content, metadata=metadata))
-                
+                # 防止死循环：如果分块长度为0，强制跳步
+                if len(sub_text) == 0:
+                    start += max_ai_chars
+                else:
+                    start += len(sub_text)
         except Exception as e:
             logger.error(f"Error processing PDF file {file_path}: {str(e)}")
+            logger.error(traceback.format_exc())
             raise
-            
         return chunks
 
     def _process_csv(self, file_path: str) -> List[DocumentChunk]:

@@ -23,6 +23,8 @@ import traceback
 from embeddings import SmartEmbeddings, TfidfEmbeddings
 from maxkb_client import MaxKBClient
 from smart_kb import SmartKnowledgeBase
+from config_loader import config
+from prompt_manager import get_prompt_manager
 
 # 加载环境变量
 load_dotenv()
@@ -301,24 +303,36 @@ class PPTLoader:
         return [Document(page_content=combined_text, metadata={"source": self.file_path})]
 
 class KnowledgeBot:
-    def __init__(self, knowledge_base_path: str = "knowledge_base"):
-        """
-        初始化知识库机器人
-        
-        Args:
-            knowledge_base_path: 知识库路径
-        """
+    def __init__(self):
+        """初始化知识库机器人"""
         print("初始化知识库机器人...")
         
-        # 初始化智能知识库
-        try:
-            self.kb = SmartKnowledgeBase(knowledge_base_path)
-            print("知识库初始化完成")
-        except Exception as e:
-            print(f"知识库初始化失败: {str(e)}")
-            print("将使用大模型作为备选方案")
-            self.kb = None
-            
+        # 设置离线模式（如果需要）
+        if config.getboolean('model', 'offline_mode', False):
+            os.environ['TRANSFORMERS_OFFLINE'] = '1'
+            os.environ['HF_DATASETS_OFFLINE'] = '1'
+            os.environ['HF_HUB_OFFLINE'] = '1'
+        
+        # 初始化向量存储
+        self.vector_store = FAISS()
+        
+        # 初始化文本分割器
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=config.getint('vector_store', 'chunk_size', 1000),
+            chunk_overlap=config.getint('vector_store', 'chunk_overlap', 200),
+            length_function=len,
+            separators=["\n\n", "\n", "。", "！", "？", ".", "!", "?"]
+        )
+        
+        # 初始化文档管理器
+        self.document_manager = DocumentManager()
+        
+        # 初始化处理器工厂
+        self.processor_factory = ProcessorFactory()
+        
+        # 加载知识库
+        self.load_knowledge_base()
+        
     def query(self, question: str) -> str:
         """
         查询知识库并返回答案
@@ -444,6 +458,25 @@ class KnowledgeBot:
         """
         try:
             print("\n=== 调用大模型生成回答 ===")
+            
+            # 从配置文件获取参数
+            from config_loader import config
+            from prompt_manager import get_prompt_manager
+            
+            # 获取配置参数
+            url = config.get('api', 'url')
+            model = config.get('api', 'model')
+            api_key = config.get_secret('siliconflow_api_key')
+            max_tokens = config.getint('api', 'max_tokens', fallback=2048)
+            temperature = config.getfloat('api', 'temperature', fallback=0.7)
+            top_p = config.getfloat('api', 'top_p', fallback=0.7)
+            frequency_penalty = config.getfloat('api', 'frequency_penalty', fallback=0.5)
+            presence_penalty = config.getfloat('api', 'presence_penalty', fallback=0.0)
+            
+            # 获取提示词管理器
+            prompt_manager = get_prompt_manager()
+            system_prompt = prompt_manager.get_system_prompt('default')
+            
             # 构建提示词
             if context:
                 print("使用知识库内容作为上下文")
@@ -462,24 +495,28 @@ class KnowledgeBot:
             print(f"问题：{question}")
             
             # 调用大模型API
-            url = "https://api.siliconflow.cn/v1/chat/completions"
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {os.getenv('SILICONFLOW_API_KEY')}"
+                "Authorization": f"Bearer {api_key}"
             }
             data = {
-                "model": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+                "model": model,
                 "messages": [
-                    {"role": "system", "content": "你是一个专业、友好的AI助手，请用简洁专业的语言回答问题。"},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 "stream": False,
-                "max_tokens": 2048,
-                "temperature": 0.7,
-                "top_p": 0.7,
-                "frequency_penalty": 0.5,
-                "presence_penalty": 0.0
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "top_p": top_p,
+                "frequency_penalty": frequency_penalty,
+                "presence_penalty": presence_penalty
             }
+            
+            print(f"\nAPI配置:")
+            print(f"URL: {url}")
+            print(f"模型: {model}")
+            print(f"系统提示词: {system_prompt[:100]}...")
             
             print("\n发送请求到大模型...")
             response = requests.post(url, headers=headers, json=data)

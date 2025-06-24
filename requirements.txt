@@ -8,6 +8,9 @@ Werkzeug==2.0.1
 requests==2.26.0
 PyPDF2==3.0.1
 python-docx==0.8.11
+docx2txt>=0.8
+mammoth>=1.6.0
+olefile>=0.47
 python-pptx>=0.6.21
 openpyxl>=3.1.2
 huggingface-hub==0.8.1
@@ -25,4 +28,5 @@ itchat-uos>=1.5.0.dev0
 wxpy>=0.3.9
 asyncio>=3.4.3
 aiohttp>=3.8.4
-loguru>=0.7.0 
+loguru>=0.7.0
+Flask-WTF==1.2.1 

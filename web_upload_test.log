@@ -1,0 +1,896 @@
+2025-06-17 15:32:59,711 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 15:32:59,712 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 15:32:59,866 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 15:32:59,867 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 15:32:59,867 - __main__ - INFO - 开始处理文件...
+2025-06-17 15:32:59,869 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 15:32:59,869 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 15:32:59,869 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 15:32:59,870 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:32:59,870 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:32:59,871 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:33:30,377 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:33:32,391 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:33:32,391 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:33:32,392 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:34:02,803 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:34:04,825 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:34:04,832 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:34:04,844 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:34:35,341 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:34:35,354 - file_processors.text_processor - WARNING - AI服务返回空结果，回退到传统分块方法
+2025-06-17 15:34:35,357 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 15:34:35,364 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 15:34:35,367 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 15:34:35,368 - __main__ - INFO -   块 1:
+2025-06-17 15:34:35,370 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 15:34:35,372 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:34:35,374 - __main__ - INFO -     长度: 51 字符
+2025-06-17 15:34:35,375 - __main__ - INFO -   块 2:
+2025-06-17 15:34:35,377 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 15:34:35,380 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:34:35,381 - __main__ - INFO -     长度: 75 字符
+2025-06-17 15:34:35,383 - __main__ - INFO -   块 3:
+2025-06-17 15:34:35,383 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 15:34:35,385 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:34:35,385 - __main__ - INFO -     长度: 82 字符
+2025-06-17 15:34:35,386 - __main__ - INFO -   块 4:
+2025-06-17 15:34:35,387 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 15:34:35,388 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:34:35,389 - __main__ - INFO -     长度: 65 字符
+2025-06-17 15:34:35,390 - __main__ - INFO -   块 5:
+2025-06-17 15:34:35,390 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 15:34:35,391 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:34:35,392 - __main__ - INFO -     长度: 37 字符
+2025-06-17 15:34:35,394 - __main__ - INFO - 清理测试文件完成
+2025-06-17 15:34:35,398 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 15:34:35,399 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 15:34:35,399 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:34:35,400 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:34:35,400 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:35:05,910 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:35:07,926 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:35:07,927 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:35:07,928 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:35:38,653 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:35:40,671 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:35:40,673 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:35:40,675 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=2048, temperature=0.7
+2025-06-17 15:36:11,116 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:36:11,118 - __main__ - WARNING - AI分块失败，返回空结果
+2025-06-17 15:36:37,596 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 15:36:37,597 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 15:36:37,758 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 15:36:37,760 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 15:36:37,760 - __main__ - INFO - 开始处理文件...
+2025-06-17 15:36:37,761 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 15:36:37,761 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 15:36:37,761 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 15:36:37,761 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:36:37,762 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:36:37,762 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:36:58,173 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:37:00,194 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:37:00,198 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:37:00,206 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:37:20,647 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:37:22,668 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:37:22,675 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:37:22,678 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:37:43,203 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:37:43,204 - file_processors.text_processor - WARNING - AI服务返回空结果，回退到传统分块方法
+2025-06-17 15:37:43,205 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 15:37:43,206 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 15:37:43,207 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 15:37:43,208 - __main__ - INFO -   块 1:
+2025-06-17 15:37:43,209 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 15:37:43,210 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:37:43,210 - __main__ - INFO -     长度: 51 字符
+2025-06-17 15:37:43,211 - __main__ - INFO -   块 2:
+2025-06-17 15:37:43,213 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 15:37:43,218 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:37:43,219 - __main__ - INFO -     长度: 75 字符
+2025-06-17 15:37:43,219 - __main__ - INFO -   块 3:
+2025-06-17 15:37:43,220 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 15:37:43,221 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:37:43,222 - __main__ - INFO -     长度: 82 字符
+2025-06-17 15:37:43,222 - __main__ - INFO -   块 4:
+2025-06-17 15:37:43,222 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 15:37:43,223 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:37:43,224 - __main__ - INFO -     长度: 65 字符
+2025-06-17 15:37:43,224 - __main__ - INFO -   块 5:
+2025-06-17 15:37:43,225 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 15:37:43,226 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:37:43,226 - __main__ - INFO -     长度: 37 字符
+2025-06-17 15:37:43,227 - __main__ - INFO - 清理测试文件完成
+2025-06-17 15:37:43,230 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 15:37:43,231 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 15:37:43,233 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:37:43,234 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:37:43,235 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:38:03,924 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:38:05,940 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:38:05,941 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:38:05,943 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:38:26,556 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:38:28,560 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:38:28,561 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:38:28,562 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:38:49,034 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:38:49,035 - __main__ - WARNING - AI分块失败，返回空结果
+2025-06-17 15:39:20,182 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 15:39:20,182 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 15:39:20,188 - file_processors.text_processor - INFO - AI分块功能已禁用，将使用传统分块方法
+2025-06-17 15:39:20,189 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 15:39:20,191 - __main__ - INFO - 开始处理文件...
+2025-06-17 15:39:20,193 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 15:39:20,193 - file_processors.text_processor - INFO - AI分块服务不可用，使用传统分块方法
+2025-06-17 15:39:20,194 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 15:39:20,194 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 15:39:20,194 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 15:39:20,196 - __main__ - INFO -   块 1:
+2025-06-17 15:39:20,197 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 15:39:20,197 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:39:20,197 - __main__ - INFO -     长度: 51 字符
+2025-06-17 15:39:20,198 - __main__ - INFO -   块 2:
+2025-06-17 15:39:20,198 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 15:39:20,199 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:39:20,199 - __main__ - INFO -     长度: 75 字符
+2025-06-17 15:39:20,199 - __main__ - INFO -   块 3:
+2025-06-17 15:39:20,200 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 15:39:20,200 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:39:20,201 - __main__ - INFO -     长度: 82 字符
+2025-06-17 15:39:20,201 - __main__ - INFO -   块 4:
+2025-06-17 15:39:20,202 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 15:39:20,202 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:39:20,205 - __main__ - INFO -     长度: 65 字符
+2025-06-17 15:39:20,205 - __main__ - INFO -   块 5:
+2025-06-17 15:39:20,207 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 15:39:20,209 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:39:20,210 - __main__ - INFO -     长度: 37 字符
+2025-06-17 15:39:20,211 - __main__ - INFO - 清理测试文件完成
+2025-06-17 15:39:20,376 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 15:39:20,377 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 15:39:20,377 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:39:20,377 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:39:20,378 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:39:40,884 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:39:42,892 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:39:42,893 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:39:42,893 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:40:03,264 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:40:05,272 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:40:05,274 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:40:05,275 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:40:25,649 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:40:25,655 - __main__ - WARNING - AI分块失败，返回空结果
+2025-06-17 15:54:39,740 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 15:54:39,741 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 15:54:39,900 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 15:54:39,901 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 15:54:39,901 - __main__ - INFO - 开始处理文件...
+2025-06-17 15:54:39,903 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 15:54:39,905 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 15:54:39,908 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 15:54:39,908 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:54:39,909 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:54:39,909 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:55:00,326 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:55:02,340 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:55:02,341 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:55:02,342 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:55:22,795 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:55:24,804 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:55:24,809 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:55:24,811 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:55:45,247 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:55:45,250 - file_processors.text_processor - WARNING - AI服务返回空结果，回退到传统分块方法
+2025-06-17 15:55:45,251 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 15:55:45,252 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 15:55:45,253 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 15:55:45,253 - __main__ - INFO -   块 1:
+2025-06-17 15:55:45,254 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 15:55:45,254 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:55:45,255 - __main__ - INFO -     长度: 51 字符
+2025-06-17 15:55:45,255 - __main__ - INFO -   块 2:
+2025-06-17 15:55:45,256 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 15:55:45,257 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:55:45,257 - __main__ - INFO -     长度: 75 字符
+2025-06-17 15:55:45,258 - __main__ - INFO -   块 3:
+2025-06-17 15:55:45,258 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 15:55:45,259 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:55:45,260 - __main__ - INFO -     长度: 82 字符
+2025-06-17 15:55:45,260 - __main__ - INFO -   块 4:
+2025-06-17 15:55:45,261 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 15:55:45,263 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:55:45,265 - __main__ - INFO -     长度: 65 字符
+2025-06-17 15:55:45,266 - __main__ - INFO -   块 5:
+2025-06-17 15:55:45,267 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 15:55:45,268 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 15:55:45,269 - __main__ - INFO -     长度: 37 字符
+2025-06-17 15:55:45,271 - __main__ - INFO - 清理测试文件完成
+2025-06-17 15:55:45,272 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 15:55:45,273 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 15:55:45,273 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 15:55:45,273 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:55:45,274 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:56:05,710 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 15:56:07,729 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 15:56:07,732 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:56:07,733 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:56:28,081 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 15:56:30,100 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 15:56:30,101 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 15:56:30,102 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 15:56:50,502 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 15:56:50,502 - __main__ - WARNING - AI分块失败，返回空结果
+2025-06-17 16:04:39,834 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:04:39,835 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:04:39,989 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:04:39,990 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:04:39,990 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:04:39,991 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:04:39,991 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:04:39,992 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:04:39,993 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:04:39,994 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:04:39,994 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:05:00,317 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 16:05:02,329 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 16:05:02,329 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:05:02,330 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:05:22,778 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 16:05:24,794 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 16:05:24,797 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:05:24,800 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:05:45,273 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 16:05:45,277 - file_processors.text_processor - WARNING - AI服务返回空结果，回退到传统分块方法
+2025-06-17 16:05:45,279 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 16:05:45,280 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 16:05:45,281 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 16:05:45,282 - __main__ - INFO -   块 1:
+2025-06-17 16:05:45,283 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:05:45,284 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:05:45,285 - __main__ - INFO -     长度: 51 字符
+2025-06-17 16:05:45,287 - __main__ - INFO -   块 2:
+2025-06-17 16:05:45,288 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 16:05:45,290 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:05:45,292 - __main__ - INFO -     长度: 75 字符
+2025-06-17 16:05:45,292 - __main__ - INFO -   块 3:
+2025-06-17 16:05:45,293 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 16:05:45,294 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:05:45,294 - __main__ - INFO -     长度: 82 字符
+2025-06-17 16:05:45,295 - __main__ - INFO -   块 4:
+2025-06-17 16:05:45,295 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 16:05:45,296 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:05:45,297 - __main__ - INFO -     长度: 65 字符
+2025-06-17 16:05:45,297 - __main__ - INFO -   块 5:
+2025-06-17 16:05:45,298 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 16:05:45,299 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:05:45,299 - __main__ - INFO -     长度: 37 字符
+2025-06-17 16:05:45,301 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:05:45,307 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:05:45,308 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:05:45,308 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:05:45,309 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:05:45,309 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:06:05,787 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 16:06:07,801 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 16:06:07,804 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:06:07,806 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:06:28,350 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 16:06:30,355 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 16:06:30,360 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:06:30,367 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=1024, temperature=0.7
+2025-06-17 16:06:50,900 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 3/3)
+2025-06-17 16:06:50,902 - __main__ - WARNING - AI分块失败，返回空结果
+2025-06-17 16:10:38,702 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:10:38,702 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:10:38,859 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:10:38,859 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:10:38,859 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:10:38,860 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:10:38,861 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:10:38,861 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:10:38,862 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:10:38,863 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:10:38,864 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:10:42,106 - ai_chunk_service - INFO - AI服务响应时间: 3.24秒
+2025-06-17 16:10:42,108 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:10:42,109 - ai_chunk_service - INFO - AI响应内容长度: 475 字符
+2025-06-17 16:10:42,112 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:10:42,113 - ai_chunk_service - INFO - AI分块成功，共生成 3 个文本块
+2025-06-17 16:10:42,115 - file_processors.text_processor - INFO - AI服务返回 3 个分块结果
+2025-06-17 16:10:42,116 - file_processors.text_processor - INFO - AI分块成功，生成 3 个文本块
+2025-06-17 16:10:42,117 - file_processors.text_processor - INFO -   块 1: 项目技术文档
+第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档...
+2025-06-17 16:10:42,119 - file_processors.text_processor - INFO -   块 2: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap...
+2025-06-17 16:10:42,120 - file_processors.text_processor - INFO -   块 3: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+二、生产环境
+采用微服务...
+2025-06-17 16:10:42,122 - __main__ - INFO - 处理完成，生成 3 个文本块
+2025-06-17 16:10:42,122 - __main__ - INFO -   块 1:
+2025-06-17 16:10:42,123 - __main__ - INFO -     内容: 项目技术文档
+第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:10:42,124 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:10:42,124 - __main__ - INFO -     长度: 58 字符
+2025-06-17 16:10:42,125 - __main__ - INFO -   块 2:
+2025-06-17 16:10:42,125 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2. 后端技术栈
+   - Python Fla...
+2025-06-17 16:10:42,130 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:10:42,132 - __main__ - INFO -     长度: 224 字符
+2025-06-17 16:10:42,133 - __main__ - INFO -   块 3:
+2025-06-17 16:10:42,133 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+二、生产环境
+采用微服务架构，支持高并发和水平扩展。
+2025-06-17 16:10:42,134 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:10:42,135 - __main__ - INFO -     长度: 64 字符
+2025-06-17 16:10:42,136 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:10:42,137 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:10:42,137 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:10:42,137 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:10:42,138 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:10:42,138 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:10:44,614 - ai_chunk_service - INFO - AI服务响应时间: 2.48秒
+2025-06-17 16:10:44,615 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:10:44,616 - ai_chunk_service - INFO - AI响应内容长度: 360 字符
+2025-06-17 16:10:44,616 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:10:44,617 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:10:44,617 - __main__ - INFO - AI分块成功，生成 4 个块
+2025-06-17 16:10:44,618 - __main__ - INFO -   块 1: 智能系统使用手册
+2025-06-17 16:10:44,618 - __main__ - INFO -   块 2: 第一章：系统概述
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户高效地管理和查询文档信...
+2025-06-17 16:10:44,619 - __main__ - INFO -   块 3: 系统特点：
+1. 智能文档处理
+   支持多种文档格式，包括PDF、Word、Excel、TXT等。...
+2025-06-17 16:12:24,673 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:12:24,674 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:12:24,912 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:12:24,913 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:12:24,913 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:12:24,914 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:12:24,914 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:12:24,915 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:12:24,915 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:12:24,915 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:12:24,915 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:12:54,522 - ai_chunk_service - INFO - AI服务响应时间: 29.61秒
+2025-06-17 16:12:54,524 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:12:54,535 - ai_chunk_service - INFO - AI响应内容长度: 599 字符
+2025-06-17 16:12:54,537 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:12:54,538 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:12:54,539 - file_processors.text_processor - INFO - AI服务返回 4 个分块结果
+2025-06-17 16:12:54,540 - file_processors.text_processor - INFO - AI分块成功，生成 4 个文本块
+2025-06-17 16:12:54,540 - file_processors.text_processor - INFO -   块 1: 项目技术文档
+
+第一章：项目背景
+
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的...
+2025-06-17 16:12:54,546 - file_processors.text_processor - INFO -   块 2: 技术架构：
+
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstra...
+2025-06-17 16:12:54,550 - file_processors.text_processor - INFO -   块 3: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+...
+2025-06-17 16:12:54,552 - __main__ - INFO - 处理完成，生成 4 个文本块
+2025-06-17 16:12:54,553 - __main__ - INFO -   块 1:
+2025-06-17 16:12:54,554 - __main__ - INFO -     内容: 项目技术文档
+
+第一章：项目背景
+
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:12:54,555 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:12:54,555 - __main__ - INFO -     长度: 60 字符
+2025-06-17 16:12:54,556 - __main__ - INFO -   块 2:
+2025-06-17 16:12:54,557 - __main__ - INFO -     内容: 技术架构：
+
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+
+2. 后端技术栈
+   - Python F...
+2025-06-17 16:12:54,558 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:12:54,559 - __main__ - INFO -     长度: 160 字符
+2025-06-17 16:12:54,559 - __main__ - INFO -   块 3:
+2025-06-17 16:12:54,561 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+
+部署方案：
+
+一、开发环境
+使用Docker容器化部署，支持快速开...
+2025-06-17 16:12:54,564 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:12:54,565 - __main__ - INFO -     长度: 105 字符
+2025-06-17 16:12:54,567 - __main__ - INFO -   块 4:
+2025-06-17 16:12:54,567 - __main__ - INFO -     内容: 二、生产环境
+采用微服务架构，支持高并发和水平扩展。
+2025-06-17 16:12:54,568 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:12:54,568 - __main__ - INFO -     长度: 26 字符
+2025-06-17 16:12:54,569 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:12:54,570 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:12:54,570 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:12:54,571 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:12:54,571 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:12:54,572 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:13:24,905 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 16:13:26,908 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 16:13:26,908 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:13:26,909 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:13:57,754 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 2/3)
+2025-06-17 16:13:59,764 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 3/3)
+2025-06-17 16:13:59,768 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:13:59,785 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:14:16,964 - ai_chunk_service - INFO - AI服务响应时间: 17.17秒
+2025-06-17 16:14:16,964 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:14:16,965 - ai_chunk_service - INFO - AI响应内容长度: 410 字符
+2025-06-17 16:14:16,965 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:14:16,966 - ai_chunk_service - INFO - AI分块成功，共生成 3 个文本块
+2025-06-17 16:14:16,966 - __main__ - INFO - AI分块成功，生成 3 个块
+2025-06-17 16:14:16,967 - __main__ - INFO -   块 1: 智能系统使用手册
+
+第一章：系统概述
+
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户...
+2025-06-17 16:14:16,968 - __main__ - INFO -   块 2: 系统特点：
+1. 智能文档处理
+   支持多种文档格式，包括PDF、Word、Excel、TXT等。...
+2025-06-17 16:14:16,969 - __main__ - INFO -   块 3: 2. 高效搜索功能
+   基于向量数据库的语义搜索。
+   支持关键词匹配和相似度排序。
+
+3. 用...
+2025-06-17 16:16:45,537 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:16:45,537 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:16:45,681 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:16:45,681 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:16:45,681 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:16:45,682 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:16:45,682 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:16:45,682 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:16:45,683 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:16:45,683 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:16:45,683 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:17:07,672 - ai_chunk_service - INFO - AI服务响应时间: 21.99秒
+2025-06-17 16:17:07,676 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:17:07,678 - ai_chunk_service - INFO - AI响应内容长度: 685 字符
+2025-06-17 16:17:07,680 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:17:07,680 - ai_chunk_service - INFO - AI分块成功，共生成 6 个文本块
+2025-06-17 16:17:07,681 - file_processors.text_processor - INFO - AI服务返回 6 个分块结果
+2025-06-17 16:17:07,682 - file_processors.text_processor - INFO - AI分块成功，生成 6 个文本块
+2025-06-17 16:17:07,683 - file_processors.text_processor - INFO -   块 1: 项目技术文档
+
+第一章：项目背景
+
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的...
+2025-06-17 16:17:07,684 - file_processors.text_processor - INFO -   块 2: 技术架构：
+
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstra...
+2025-06-17 16:17:07,685 - file_processors.text_processor - INFO -   块 3: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+...
+2025-06-17 16:17:07,686 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 16:17:07,686 - __main__ - INFO -   块 1:
+2025-06-17 16:17:07,687 - __main__ - INFO -     内容: 项目技术文档
+
+第一章：项目背景
+
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:17:07,688 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:17:07,689 - __main__ - INFO -     长度: 60 字符
+2025-06-17 16:17:07,689 - __main__ - INFO -   块 2:
+2025-06-17 16:17:07,690 - __main__ - INFO -     内容: 技术架构：
+
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 16:17:07,692 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:17:07,693 - __main__ - INFO -     长度: 76 字符
+2025-06-17 16:17:07,695 - __main__ - INFO -   块 3:
+2025-06-17 16:17:07,696 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 16:17:07,697 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:17:07,698 - __main__ - INFO -     长度: 82 字符
+2025-06-17 16:17:07,698 - __main__ - INFO -   块 4:
+2025-06-17 16:17:07,699 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 16:17:07,700 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:17:07,700 - __main__ - INFO -     长度: 65 字符
+2025-06-17 16:17:07,700 - __main__ - INFO -   块 5:
+2025-06-17 16:17:07,701 - __main__ - INFO -     内容: 部署方案：
+
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 16:17:07,701 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:17:07,702 - __main__ - INFO -     长度: 38 字符
+2025-06-17 16:17:07,703 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:17:07,704 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:17:07,704 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:17:07,704 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:17:07,705 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:17:07,705 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:17:25,221 - ai_chunk_service - INFO - AI服务响应时间: 17.52秒
+2025-06-17 16:17:25,223 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:17:25,224 - ai_chunk_service - INFO - AI响应内容长度: 451 字符
+2025-06-17 16:17:25,226 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:17:25,228 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:17:25,229 - __main__ - INFO - AI分块成功，生成 4 个块
+2025-06-17 16:17:25,230 - __main__ - INFO -   块 1: 智能系统使用手册
+
+第一章：系统概述
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户高...
+2025-06-17 16:17:25,232 - __main__ - INFO -   块 2: 系统特点：
+1. 智能文档处理
+   支持多种文档格式，包括PDF、Word、Excel、TXT等。...
+2025-06-17 16:17:25,233 - __main__ - INFO -   块 3: 2. 高效搜索功能
+   基于向量数据库的语义搜索。
+   支持关键词匹配和相似度排序。
+2025-06-17 16:40:18,086 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:40:18,086 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:40:18,284 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:40:18,285 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:40:18,286 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:40:18,286 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:40:18,286 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:40:18,287 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:40:18,287 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:40:18,287 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:40:18,288 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:41:18,810 - ai_chunk_service - ERROR - AI服务请求超时 (尝试 1/3)
+2025-06-17 16:41:20,820 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 2/3)
+2025-06-17 16:41:20,825 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:41:20,828 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:41:41,149 - ai_chunk_service - INFO - AI服务响应时间: 20.32秒
+2025-06-17 16:41:41,149 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:41:41,150 - ai_chunk_service - INFO - AI响应内容长度: 410 字符
+2025-06-17 16:41:41,151 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:41:41,152 - ai_chunk_service - INFO - AI分块成功，共生成 3 个文本块
+2025-06-17 16:41:41,152 - file_processors.text_processor - INFO - AI服务返回 3 个分块结果
+2025-06-17 16:41:41,153 - file_processors.text_processor - INFO - AI分块成功，生成 3 个文本块
+2025-06-17 16:41:41,153 - file_processors.text_processor - INFO -   块 1: 项目技术文档：本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。...
+2025-06-17 16:41:41,154 - file_processors.text_processor - INFO -   块 2: 第一章：项目背景。技术架构包括前端技术栈（React.js、Bootstrap、Axios）、后端技...
+2025-06-17 16:41:41,156 - file_processors.text_processor - INFO -   块 3: 部署方案：开发环境使用Docker容器化部署，支持快速开发和测试。生产环境采用微服务架构，支持高并发...
+2025-06-17 16:41:41,157 - __main__ - INFO - 处理完成，生成 3 个文本块
+2025-06-17 16:41:41,159 - __main__ - INFO -   块 1:
+2025-06-17 16:41:41,159 - __main__ - INFO -     内容: 项目技术文档：本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:41:41,161 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:41:41,162 - __main__ - INFO -     长度: 49 字符
+2025-06-17 16:41:41,162 - __main__ - INFO -   块 2:
+2025-06-17 16:41:41,163 - __main__ - INFO -     内容: 第一章：项目背景。技术架构包括前端技术栈（React.js、Bootstrap、Axios）、后端技术栈（Python Flask、FAISS、Sentence Transformers）以及AI服务...
+2025-06-17 16:41:41,163 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:41:41,163 - __main__ - INFO -     长度: 127 字符
+2025-06-17 16:41:41,164 - __main__ - INFO -   块 3:
+2025-06-17 16:41:41,164 - __main__ - INFO -     内容: 部署方案：开发环境使用Docker容器化部署，支持快速开发和测试。生产环境采用微服务架构，支持高并发和水平扩展。
+2025-06-17 16:41:41,164 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:41:41,165 - __main__ - INFO -     长度: 56 字符
+2025-06-17 16:41:41,166 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:41:41,168 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:41:41,169 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:41:41,169 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:41:41,169 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:41:41,170 - ai_chunk_service - INFO - 请求参数: model=deepseek-ai/DeepSeek-R1-0528-Qwen3-8B, max_tokens=512, temperature=0.7
+2025-06-17 16:42:04,266 - ai_chunk_service - INFO - AI服务响应时间: 23.10秒
+2025-06-17 16:42:04,266 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:42:04,267 - ai_chunk_service - INFO - AI响应内容长度: 453 字符
+2025-06-17 16:42:04,268 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:42:04,269 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:42:04,270 - __main__ - INFO - AI分块成功，生成 4 个块
+2025-06-17 16:42:04,271 - __main__ - INFO -   块 1: 智能系统使用手册
+
+第一章：系统概述
+
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户...
+2025-06-17 16:42:04,273 - __main__ - INFO -   块 2: 系统特点：
+1. 智能文档处理
+   支持多种文档格式，包括PDF、Word、Excel、TXT等。...
+2025-06-17 16:42:04,275 - __main__ - INFO -   块 3: 2. 高效搜索功能
+   基于向量数据库的语义搜索。
+   支持关键词匹配和相似度排序。
+2025-06-17 16:56:30,008 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:56:30,009 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:56:30,159 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:56:30,160 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:56:30,160 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:56:30,160 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:56:30,161 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:56:30,161 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:56:30,161 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:56:30,162 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:56:30,162 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:56:33,337 - ai_chunk_service - INFO - AI服务响应时间: 3.17秒
+2025-06-17 16:56:33,338 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:56:33,340 - ai_chunk_service - INFO - AI响应内容长度: 498 字符
+2025-06-17 16:56:33,342 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:56:33,344 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:56:33,348 - file_processors.text_processor - INFO - AI服务返回 4 个分块结果
+2025-06-17 16:56:33,350 - ai_chunk_service - WARNING - 分块内容过短
+2025-06-17 16:56:33,352 - file_processors.text_processor - WARNING - AI分块结果验证失败，回退到传统分块方法
+2025-06-17 16:56:33,353 - file_processors.text_processor - INFO - 使用传统分块方法
+2025-06-17 16:56:33,354 - file_processors.text_processor - INFO - 使用段落分割策略，分割出 6 个段落
+2025-06-17 16:56:33,355 - __main__ - INFO - 处理完成，生成 6 个文本块
+2025-06-17 16:56:33,356 - __main__ - INFO -   块 1:
+2025-06-17 16:56:33,356 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:56:33,358 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:56:33,359 - __main__ - INFO -     长度: 51 字符
+2025-06-17 16:56:33,360 - __main__ - INFO -   块 2:
+2025-06-17 16:56:33,363 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2025-06-17 16:56:33,366 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:56:33,367 - __main__ - INFO -     长度: 75 字符
+2025-06-17 16:56:33,368 - __main__ - INFO -   块 3:
+2025-06-17 16:56:33,369 - __main__ - INFO -     内容: 2. 后端技术栈
+   - Python Flask：Web框架
+   - FAISS：向量数据库
+   - Sentence Transformers：文本向量化
+2025-06-17 16:56:33,370 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:56:33,370 - __main__ - INFO -     长度: 82 字符
+2025-06-17 16:56:33,371 - __main__ - INFO -   块 4:
+2025-06-17 16:56:33,371 - __main__ - INFO -     内容: 3. AI服务集成
+   - 大语言模型API：智能分块和问答
+   - 向量相似度搜索：语义匹配
+   - 关键词提取：内容分析
+2025-06-17 16:56:33,372 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:56:33,373 - __main__ - INFO -     长度: 65 字符
+2025-06-17 16:56:33,374 - __main__ - INFO -   块 5:
+2025-06-17 16:56:33,375 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+2025-06-17 16:56:33,376 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:56:33,376 - __main__ - INFO -     长度: 37 字符
+2025-06-17 16:56:33,379 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:56:33,381 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:56:33,383 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:56:33,384 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:56:33,384 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:56:33,385 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:56:36,055 - ai_chunk_service - INFO - AI服务响应时间: 2.67秒
+2025-06-17 16:56:36,056 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:56:36,057 - ai_chunk_service - INFO - AI响应内容长度: 383 字符
+2025-06-17 16:56:36,058 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:56:36,059 - ai_chunk_service - INFO - AI分块成功，共生成 5 个文本块
+2025-06-17 16:56:36,061 - __main__ - INFO - AI分块成功，生成 5 个块
+2025-06-17 16:56:36,062 - __main__ - INFO -   块 1: 智能系统使用手册
+2025-06-17 16:56:36,064 - __main__ - INFO -   块 2: 第一章：系统概述
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户高效地管理和查询文档信...
+2025-06-17 16:56:36,066 - __main__ - INFO -   块 3: 系统特点：
+1. 智能文档处理
+   支持多种文档格式，包括PDF、Word、Excel、TXT等。...
+2025-06-17 16:57:13,492 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 16:57:13,497 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 16:57:13,649 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 16:57:13,650 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 16:57:13,650 - __main__ - INFO - 开始处理文件...
+2025-06-17 16:57:13,651 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 16:57:13,651 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 16:57:13,651 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 16:57:13,652 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:57:13,652 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:57:13,652 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:57:16,714 - ai_chunk_service - INFO - AI服务响应时间: 3.06秒
+2025-06-17 16:57:16,715 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:57:16,716 - ai_chunk_service - INFO - AI响应内容长度: 498 字符
+2025-06-17 16:57:16,718 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:57:16,719 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 16:57:16,719 - file_processors.text_processor - INFO - AI服务返回 4 个分块结果
+2025-06-17 16:57:16,720 - ai_chunk_service - INFO - 验证通过，有效分块数量: 4/4
+2025-06-17 16:57:16,720 - file_processors.text_processor - INFO - AI分块成功，生成 4 个文本块
+2025-06-17 16:57:16,721 - file_processors.text_processor - INFO -   块 1: 项目技术文档...
+2025-06-17 16:57:16,722 - file_processors.text_processor - INFO -   块 2: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务...
+2025-06-17 16:57:16,725 - file_processors.text_processor - INFO -   块 3: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap...
+2025-06-17 16:57:16,727 - __main__ - INFO - 处理完成，生成 4 个文本块
+2025-06-17 16:57:16,729 - __main__ - INFO -   块 1:
+2025-06-17 16:57:16,730 - __main__ - INFO -     内容: 项目技术文档
+2025-06-17 16:57:16,731 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:57:16,731 - __main__ - INFO -     长度: 6 字符
+2025-06-17 16:57:16,732 - __main__ - INFO -   块 2:
+2025-06-17 16:57:16,732 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 16:57:16,733 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:57:16,734 - __main__ - INFO -     长度: 51 字符
+2025-06-17 16:57:16,734 - __main__ - INFO -   块 3:
+2025-06-17 16:57:16,735 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2. 后端技术栈
+   - Python Fla...
+2025-06-17 16:57:16,736 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:57:16,737 - __main__ - INFO -     长度: 224 字符
+2025-06-17 16:57:16,737 - __main__ - INFO -   块 4:
+2025-06-17 16:57:16,738 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+二、生产环境
+采用微服务架构，支持高并发和水平扩展。
+2025-06-17 16:57:16,739 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 16:57:16,742 - __main__ - INFO -     长度: 64 字符
+2025-06-17 16:57:16,746 - __main__ - INFO - 清理测试文件完成
+2025-06-17 16:57:16,747 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 16:57:16,748 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 16:57:16,748 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 16:57:16,748 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 16:57:16,749 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 16:57:19,232 - ai_chunk_service - INFO - AI服务响应时间: 2.48秒
+2025-06-17 16:57:19,234 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 16:57:19,235 - ai_chunk_service - INFO - AI响应内容长度: 365 字符
+2025-06-17 16:57:19,236 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 16:57:19,236 - ai_chunk_service - INFO - AI分块成功，共生成 5 个文本块
+2025-06-17 16:57:19,239 - __main__ - INFO - AI分块成功，生成 5 个块
+2025-06-17 16:57:19,240 - __main__ - INFO -   块 1: 智能系统使用手册
+2025-06-17 16:57:19,242 - __main__ - INFO -   块 2: 第一章：系统概述
+本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户高效地管理和查询文档信...
+2025-06-17 16:57:19,244 - __main__ - INFO -   块 3: 系统特点：
+1. 智能文档处理
+支持多种文档格式，包括PDF、Word、Excel、TXT等。
+自动...
+2025-06-17 17:00:50,714 - __main__ - INFO - 创建测试文件: uploads\text\test_document.txt
+2025-06-17 17:00:50,714 - __main__ - INFO - 开始模拟页面上传流程...
+2025-06-17 17:00:50,884 - file_processors.text_processor - INFO - AI分块服务初始化成功
+2025-06-17 17:00:50,884 - __main__ - INFO - 获取到处理器: TextProcessor
+2025-06-17 17:00:50,884 - __main__ - INFO - 开始处理文件...
+2025-06-17 17:00:50,885 - file_processors.text_processor - INFO - 开始处理文本，长度: 354 字符
+2025-06-17 17:00:50,885 - file_processors.text_processor - INFO - 尝试使用AI模型进行智能分块
+2025-06-17 17:00:50,885 - file_processors.text_processor - INFO - 发送文本到AI服务，文本长度: 354 字符
+2025-06-17 17:00:50,886 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 17:00:50,887 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 17:00:50,891 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 17:00:54,770 - ai_chunk_service - INFO - AI服务响应时间: 3.88秒
+2025-06-17 17:00:54,772 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 17:00:54,772 - ai_chunk_service - INFO - AI响应内容长度: 586 字符
+2025-06-17 17:00:54,774 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 17:00:54,774 - ai_chunk_service - INFO - AI分块成功，共生成 4 个文本块
+2025-06-17 17:00:54,774 - file_processors.text_processor - INFO - AI服务返回 4 个分块结果
+2025-06-17 17:00:54,774 - ai_chunk_service - INFO - 验证通过，有效分块数量: 4/4
+2025-06-17 17:00:54,775 - file_processors.text_processor - INFO - AI分块成功，生成 4 个文本块
+2025-06-17 17:00:54,775 - file_processors.text_processor - INFO -   块 1: 项目技术文档...
+2025-06-17 17:00:54,775 - file_processors.text_processor - INFO -   块 2: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务...
+2025-06-17 17:00:54,776 - file_processors.text_processor - INFO -   块 3: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap...
+2025-06-17 17:00:54,777 - __main__ - INFO - 处理完成，生成 4 个文本块
+2025-06-17 17:00:54,778 - __main__ - INFO -   块 1:
+2025-06-17 17:00:54,778 - __main__ - INFO -     内容: 项目技术文档
+2025-06-17 17:00:54,780 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 17:00:54,780 - __main__ - INFO -     长度: 6 字符
+2025-06-17 17:00:54,780 - __main__ - INFO -   块 2:
+2025-06-17 17:00:54,780 - __main__ - INFO -     内容: 第一章：项目背景
+本项目旨在开发一个基于人工智能的知识管理系统，为用户提供智能化的文档管理和查询服务。
+2025-06-17 17:00:54,781 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 17:00:54,782 - __main__ - INFO -     长度: 51 字符
+2025-06-17 17:00:54,782 - __main__ - INFO -   块 3:
+2025-06-17 17:00:54,782 - __main__ - INFO -     内容: 技术架构：
+1. 前端技术栈
+   - React.js：用户界面框架
+   - Bootstrap：UI组件库
+   - Axios：HTTP客户端
+2. 后端技术栈
+   - Python Fla...
+2025-06-17 17:00:54,785 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 17:00:54,785 - __main__ - INFO -     长度: 224 字符
+2025-06-17 17:00:54,788 - __main__ - INFO -   块 4:
+2025-06-17 17:00:54,789 - __main__ - INFO -     内容: 部署方案：
+一、开发环境
+使用Docker容器化部署，支持快速开发和测试。
+二、生产环境
+采用微服务架构，支持高并发和水平扩展。
+2025-06-17 17:00:54,790 - __main__ - INFO -     来源: uploads\text\test_document.txt
+2025-06-17 17:00:54,791 - __main__ - INFO -     长度: 64 字符
+2025-06-17 17:00:54,792 - __main__ - INFO - 清理测试文件完成
+2025-06-17 17:00:54,793 - __main__ - INFO - AI分块服务初始化成功
+2025-06-17 17:00:54,795 - __main__ - INFO - 测试文本长度: 222 字符
+2025-06-17 17:00:54,795 - ai_chunk_service - INFO - 开始使用AI模型进行智能分块 (尝试 1/3)
+2025-06-17 17:00:54,795 - ai_chunk_service - INFO - 发送请求到AI服务: https://api.siliconflow.cn/v1/chat/completions
+2025-06-17 17:00:54,795 - ai_chunk_service - INFO - 请求参数: model=Qwen/Qwen2-7B-Instruct, max_tokens=256, temperature=0.7
+2025-06-17 17:00:56,953 - ai_chunk_service - INFO - AI服务响应时间: 2.16秒
+2025-06-17 17:00:56,955 - ai_chunk_service - INFO - AI服务响应状态码: 200
+2025-06-17 17:00:56,956 - ai_chunk_service - INFO - AI响应内容长度: 341 字符
+2025-06-17 17:00:56,956 - ai_chunk_service - INFO - 策略 1 解析成功
+2025-06-17 17:00:56,957 - ai_chunk_service - INFO - AI分块成功，共生成 5 个文本块
+2025-06-17 17:00:56,957 - __main__ - INFO - AI分块成功，生成 5 个块
+2025-06-17 17:00:56,958 - __main__ - INFO -   块 1: 智能系统使用手册
+2025-06-17 17:00:56,959 - __main__ - INFO -   块 2: 第一章：系统概述，本智能系统是一款基于人工智能技术的知识管理平台，旨在帮助用户高效地管理和查询文档信...
+2025-06-17 17:00:56,959 - __main__ - INFO -   块 3: 系统特点：1. 智能文档处理，支持多种文档格式，包括PDF、Word、Excel、TXT等。自动提取...

@@ -8,50 +8,46 @@ import win32api
 import traceback
 import re
 from wxauto import WeChat
-from dotenv import load_dotenv
 from knowledge_bot import KnowledgeBot
 from pathlib import Path
 import logging
+from config_loader import config
+from knowledge_query_service import get_knowledge_query_service
+from prompt_manager import get_prompt_manager
+import threading
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# 打印当前工作目录
-print(f"当前工作目录: {os.getcwd()}")
+# 初始化知识库查询服务
+knowledge_query_service = get_knowledge_query_service()
+vector_store = None
 
-# 检查.env文件
-env_path = Path('.env')
-print(f".env文件路径: {env_path.absolute()}")
-print(f".env文件是否存在: {env_path.exists()}")
+# 初始化提示词管理器
+prompt_manager = get_prompt_manager()
 
-# 直接从.env文件读取API密钥
-api_key = None
-if env_path.exists():
-    print("\n.env文件内容预览:")
-    with open(env_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.strip().startswith('SILICONFLOW_API_KEY='):
-                api_key = line.strip().split('=', 1)[1]
-                masked_key = api_key[:4] + '*' * 8 + api_key[-4:] if len(api_key) > 12 else api_key
-                print(f"从.env文件读取到API密钥: {masked_key}")
-                # 直接设置环境变量
-                os.environ['SILICONFLOW_API_KEY'] = api_key
-                break
+# 初始化向量存储（模块级，便于search_knowledge_base使用）
+def init_vector_store():
+    global vector_store
+    from vector_store import FaissVectorStore
+    vector_store = FaissVectorStore()
+    vector_store_path = "knowledge_base/vector_store"
+    if os.path.exists(f"{vector_store_path}.index") and os.path.exists(f"{vector_store_path}.pkl"):
+        vector_store.load(vector_store_path)
+        logger.info("知识库加载成功")
+    else:
+        logger.info("知识库文件不存在，将创建新的知识库")
+    knowledge_query_service.set_vector_store(vector_store)
+    logger.info("知识库查询服务已设置向量存储")
 
-if not api_key:
-    raise ValueError("无法从.env文件读取API密钥")
+# 初始化模块级向量存储和服务
+init_vector_store()
 
-# 加载其他环境变量
-load_dotenv()
-
-# 打印所有环境变量
-print("\n环境变量:")
-for key, value in os.environ.items():
-    if 'KEY' in key:  # 只打印包含 'KEY' 的环境变量，并且隐藏具体值
-        masked_value = value[:4] + '*' * 8 + value[-4:] if len(value) > 12 else value
-        print(f"{key}: {masked_value}")
+# 对外暴露统一的知识库查询接口
+def search_knowledge_base(query, top_k=None, min_score=None):
+    return knowledge_query_service.search_for_wechat(query, top_k=top_k, min_score=min_score)
 
 def list_window_names():
     """列出所有窗口名称"""
@@ -133,75 +129,127 @@ def activate_window(hwnd):
 
 class WeChatBot:
     def __init__(self):
-        """初始化微信机器人"""
+        # 初始化配置
+        from config_loader import config
+        
+        # 设置API密钥
+        api_key = config.get_secret('SILICONFLOW_API_KEY')
+        if api_key:
+            config.set_secret('SILICONFLOW_API_KEY', api_key)
+        
+        # 初始化日志
+        logging.basicConfig(
+            level=getattr(logging, config.get('logging', 'log_level', 'INFO')),
+            format=config.get('logging', 'log_format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        
+        # 初始化知识库
+        self.init_knowledge_base()
+        
+        # 初始化微信机器人
         logger.info("正在初始化微信机器人...")
         self.wx = WeChat()
         logger.info("微信实例创建成功")
         logger.info(f"微信初始化成功，当前共有 {len(self.wx.GetSessionList())} 个会话")
         
-        # 加载环境变量
+        # 加载环境变量和配置
         self.load_env()
-        
-        # 初始化知识库
-        self.init_knowledge_base()
         
         # 初始化 HTTP 会话
         self.session = requests.Session()
         
+        # 打印环境变量（调试用）
+        logger.info("=== 环境变量检查 ===")
+        for key, value in os.environ.items():
+            if 'API' in key or 'KEY' in key or 'TOKEN' in key:
+                # 隐藏敏感信息
+                masked_value = value[:4] + '*' * (len(value) - 8) + value[-4:] if len(value) > 8 else '****'
+                logger.info(f"{key}: {masked_value}")
+        
+        # 初始化对话历史记录
+        self.conversation_history = {}  # 用于存储每个用户的对话历史
+        self.max_history_length = 10    # 每个用户最多保存10轮对话
+        
+        self.vector_store_path = "knowledge_base/vector_store"
+        self._last_index_mtime = None
+        self._last_pkl_mtime = None
+        self._start_vector_store_watcher()
+        
     def load_env(self):
-        """加载环境变量"""
-        self.api_key = os.getenv('SILICONFLOW_API_KEY')  # 从环境变量获取API密钥
+        """加载环境变量和配置"""
+        from config_loader import config
+        
+        # 加载API密钥
+        self.api_key = config.get_secret('SILICONFLOW_API_KEY')
         if not self.api_key:
-            raise ValueError("请设置 SILICONFLOW_API_KEY 环境变量")
-            
+            raise ValueError("请设置 SILICONFLOW_API_KEY 配置")
+        
         # 打印API密钥前几位和后几位，中间用星号代替
         masked_key = self.api_key[:4] + '*' * 8 + self.api_key[-4:] if len(self.api_key) > 12 else self.api_key
         logger.info(f"使用的API密钥: {masked_key}")
-            
-        self.api_url = 'https://api.siliconflow.cn/v1/chat/completions'  # 使用正确的 API URL
-        self.model = 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'  # 使用正确的模型名称
+        
+        # 从配置文件加载API配置
+        self.api_url = config.get('api', 'url')
+        self.model = config.get('api', 'model')
+        self.max_tokens = config.getint('api', 'max_tokens')
+        self.temperature = config.getfloat('api', 'temperature')
+        self.top_p = config.getfloat('api', 'top_p')
+        self.frequency_penalty = config.getfloat('api', 'frequency_penalty')
+        self.presence_penalty = config.getfloat('api', 'presence_penalty')
+        self.timeout = config.getint('api', 'timeout')
+        self.max_retries = config.getint('api', 'max_retries')
+        self.retry_delay = config.getint('api', 'retry_delay')
+        
+        # 从配置文件加载聊天配置
+        self.trigger = f"@{config.get('chat', 'trigger_word')}"
+        self.max_history_length = config.getint('chat', 'max_history_length')
+        self.check_interval = config.getint('chat', 'check_interval')
+        self.message_expire_time = config.getint('chat', 'message_expire_time')
+        self.max_processed_hashes = config.getint('chat', 'max_processed_hashes')
+        
+        # 从配置文件加载向量存储配置
+        self.chunk_size = config.getint('vector_store', 'chunk_size')
+        self.chunk_overlap = config.getint('vector_store', 'chunk_overlap')
+        self.similarity_threshold = config.getfloat('vector_store', 'similarity_threshold')
+        self.max_results = config.getint('vector_store', 'max_results')
+        
+        # 初始化其他变量
         self.last_message = ""
         self.error_sent = False
         self.last_check_time = time.time()
         
+        logger.info("配置加载完成")
+        logger.info(f"API URL: {self.api_url}")
+        logger.info(f"模型: {self.model}")
+        logger.info(f"触发词: {self.trigger}")
+        logger.info(f"最大历史长度: {self.max_history_length}")
+        logger.info(f"检查间隔: {self.check_interval}秒")
+        logger.info(f"消息过期时间: {self.message_expire_time}秒")
+        
     def init_knowledge_base(self):
         """初始化知识库"""
         try:
-            logger.info("=== 初始化知识库 ===")
-            
-            # 使用与前端相同的向量存储实例
+            logger.info("初始化知识库...")
             from vector_store import FaissVectorStore
-            self.vector_store = FaissVectorStore()  # 会返回相同的实例
-            
-            # 检查知识库文件是否存在
-            kb_path = os.path.join('knowledge_base', 'vector_store')  # 使用与前端相同的路径
-            if os.path.exists(f"{kb_path}.pkl"):
-                logger.info(f"找到知识库文件: {kb_path}")
-                try:
-                    self.vector_store.load(kb_path)
-                    logger.info(f"成功加载知识库文件")
-                except Exception as e:
-                    logger.error(f"加载知识库文件失败: {str(e)}")
-                    logger.error(traceback.format_exc())
+            # 初始化向量存储
+            self.vector_store = FaissVectorStore()
+            # 尝试加载现有向量存储
+            vector_store_path = "knowledge_base/vector_store"
+            if os.path.exists(f"{vector_store_path}.index") and os.path.exists(f"{vector_store_path}.pkl"):
+                self.vector_store.load(vector_store_path)
+                logger.info("知识库加载成功")
             else:
-                logger.warning(f"知识库文件不存在: {kb_path}")
-            
-            logger.info("成功连接到全局知识库实例")
-            logger.info(f"当前知识库包含 {len(self.vector_store.documents)} 条文档")
-            
-            # 打印知识库内容预览
-            if len(self.vector_store.documents) > 0:
-                logger.info("知识库内容预览:")
-                for i, (text, metadata) in enumerate(self.vector_store.documents[:5]):  # 只显示前5条
-                    preview = text[:100] + "..." if len(text) > 100 else text
-                    logger.info(f"文档[{i}]: {preview}")
-            else:
-                logger.warning("知识库为空，请先添加文档")
-            
+                logger.info("知识库文件不存在，将创建新的知识库")
+            # 设置知识库查询服务的向量存储（确保加载后再设置）
+            knowledge_query_service.set_vector_store(self.vector_store)
+            # 调试：打印所有文本块信息
+            logger.info(f"微信端知识库文本块数量: {len(self.vector_store.documents)}")
+            for i, (text, metadata) in enumerate(self.vector_store.documents):
+                logger.info(f"块{i+1}: 来源: {metadata.get('source', '无')}, 类型: {metadata.get('type', '无')}, 内容前50: {text[:50]}")
         except Exception as e:
-            logger.error("=== 详细错误信息 ===")
+            logger.error(f"初始化知识库失败: {str(e)}")
             logger.error(traceback.format_exc())
-            raise e
+            self.vector_store = None
     
     def get_ai_response(self, message):
         """生成AI回复"""
@@ -222,43 +270,30 @@ class WeChatBot:
             # 在知识库中搜索
             logger.info("\n--- 步骤2: 搜索知识库 ---")
             try:
-                # 使用多级相似度阈值
-                thresholds = [0.05, 0.03, 0.01]  # 从相对严格到宽松
-                best_results = None
-                best_threshold = None
-                
-                for threshold in thresholds:
-                    logger.info(f"\n尝试相似度阈值: {threshold}")
-                    self.vector_store.similarity_threshold = threshold
-                    
-                    try:
-                        current_results = self.vector_store.search(message)
-                        if current_results:
-                            logger.info(f"在阈值 {threshold} 下找到 {len(current_results)} 个结果")
-                            # 如果是第一次找到内容，或者当前内容更相关（基于长度），则更新
-                            if not best_results or len(current_results) > len(best_results):
-                                best_results = current_results
-                                best_threshold = threshold
-                                logger.info(f"更新为当前最佳结果")
-                    except Exception as search_error:
-                        logger.error(f"在阈值 {threshold} 下搜索失败: {str(search_error)}")
-                        continue
-                
-                if not best_results:
-                    logger.warning("\n在所有阈值下都没有找到相关内容")
-                    return self._get_llm_response(message, context=None)
-                
-                # 记录最佳搜索结果
-                logger.info(f"\n--- 步骤3: 处理搜索结果 ---")
-                logger.info(f"使用最佳阈值 {best_threshold} 的搜索结果:")
+                logger.info("执行知识库搜索...")
+                search_result = knowledge_query_service.search_for_wechat(message)
+                logger.info(f"搜索完成，结果: {search_result['success']}")
+            except Exception as search_error:
+                logger.error("知识库搜索失败")
+                logger.error(f"错误类型: {type(search_error).__name__}")
+                logger.error(f"错误信息: {str(search_error)}")
+                logger.error("详细错误堆栈:")
+                logger.error(traceback.format_exc())
+                logger.info("由于搜索失败，将直接使用大模型回答")
+                return self._get_llm_response(message, context=None)
+            
+            if search_result['success'] and search_result['results']:
+                # 记录搜索结果
+                logger.info("\n--- 步骤3: 处理搜索结果 ---")
                 relevant_contexts = []
-                for i, (text, score, metadata) in enumerate(best_results):
+                logger.info("搜索结果详情:")
+                for i, result in enumerate(search_result['results']):
                     logger.info(f"\n结果 [{i+1}]:")
-                    logger.info(f"相关度得分: {score:.4f}")
-                    logger.info(f"内容预览: {text[:200]}...")
-                    if metadata:
-                        logger.info(f"元数据: {metadata}")
-                    relevant_contexts.append(f"相关度{score:.4f}: {text}")
+                    logger.info(f"相关度得分: {result['score']:.4f}")
+                    logger.info(f"内容预览: {result['content'][:200]}...")
+                    if 'metadata' in result:
+                        logger.info(f"元数据: {result['metadata']}")
+                    relevant_contexts.append(f"相关度{result['score']:.4f}: {result['content']}")
                 
                 # 将相关内容组合成上下文
                 logger.info("\n--- 步骤4: 准备大模型上下文 ---")
@@ -271,14 +306,9 @@ class WeChatBot:
                 # 调用大模型生成最终回复
                 logger.info("\n--- 步骤5: 调用大模型生成回复 ---")
                 return self._get_llm_response(message, context=context)
-                
-            except Exception as search_error:
-                logger.error("知识库搜索失败")
-                logger.error(f"错误类型: {type(search_error).__name__}")
-                logger.error(f"错误信息: {str(search_error)}")
-                logger.error("详细错误堆栈:")
-                logger.error(traceback.format_exc())
-                logger.info("由于搜索失败，将直接使用大模型回答")
+            else:
+                logger.warning("\n--- 步骤3: 未找到匹配结果 ---")
+                logger.info("由于未找到相关内容，将直接使用大模型回答")
                 return self._get_llm_response(message, context=None)
                 
         except Exception as e:
@@ -289,107 +319,139 @@ class WeChatBot:
             logger.error(traceback.format_exc())
             return f"抱歉，处理请求时出错: {str(e)}"
 
-    def _get_llm_response(self, message: str, context: str = None) -> str:
+    def _get_llm_response(self, message: str, context: str = None, user_id: str = None) -> str:
         """调用大模型生成回复"""
-        try:
-            logger.info("\n" + "="*50)
-            logger.info("开始调用大模型API")
-            logger.info("="*50)
-            
-            # 构建系统提示词
-            logger.info("\n--- 步骤1: 准备提示词 ---")
-            system_prompt = """你是一个专业、友好的AI助手。请基于提供的相关信息回答用户的问题。
-如果相关信息不足以完整回答问题，你可以：
-1. 使用已有信息回答问题的相关部分
-2. 明确指出哪些部分缺少信息
-3. 建议用户如何获取更多信息
-
-请用简洁专业的语言回答，确保回答准确、有帮助且易于理解。"""
-
-            # 准备用户提示词
-            if context:
-                logger.info("使用知识库上下文构建提示词")
-                user_prompt = f"""请基于以下相关信息回答问题。
-
-相关信息：
-{context}
-
-用户问题：{message}
-
-请生成专业、准确的回答。如果信息不足，请说明。"""
-            else:
-                logger.info("无知识库上下文，直接使用用户问题")
-                user_prompt = message
-
-            # 准备请求数据
-            logger.info("\n--- 步骤2: 准备API请求 ---")
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            }
-            
-            data = {
-                'model': self.model,
-                'messages': [
-                    {'role': 'system', 'content': system_prompt},
-                    {'role': 'user', 'content': user_prompt}
-                ],
-                'stream': False,
-                'max_tokens': 2048,
-                'temperature': 0.7,
-                'top_p': 0.7,
-                'frequency_penalty': 0.5,
-                'presence_penalty': 0.0
-            }
-            
-            # 打印请求信息
-            logger.info("请求配置:")
-            logger.info(f"API URL: {self.api_url}")
-            logger.info(f"模型名称: {self.model}")
-            logger.info("系统提示词预览:")
-            logger.info(system_prompt)
-            logger.info("用户提示词预览:")
-            prompt_preview = user_prompt[:500] + "..." if len(user_prompt) > 500 else user_prompt
-            logger.info(prompt_preview)
-            
-            # 发送请求
-            logger.info("\n--- 步骤3: 发送API请求 ---")
-            logger.info("正在发送请求...")
-            start_time = time.time()
-            response = self.session.post(self.api_url, headers=headers, json=data)
-            end_time = time.time()
-            
-            # 打印响应信息
-            logger.info("\n--- 步骤4: 处理API响应 ---")
-            logger.info(f"请求耗时: {end_time - start_time:.2f} 秒")
-            logger.info(f"状态码: {response.status_code}")
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            if 'choices' in result and len(result['choices']) > 0:
-                answer = result['choices'][0]['message']['content']
-                logger.info("\n--- 步骤5: 生成回复成功 ---")
-                logger.info("回复内容:")
-                logger.info(answer)
+        max_retries = 3
+        retry_delay = 2  # 重试延迟秒数
+        
+        for attempt in range(max_retries):
+            try:
                 logger.info("\n" + "="*50)
-                logger.info("处理完成")
+                logger.info(f"开始调用大模型API (尝试 {attempt + 1}/{max_retries})")
                 logger.info("="*50)
-                return answer
-            else:
-                error_msg = "API返回的数据格式不正确"
-                logger.error(f"\n!!! {error_msg} !!!")
-                logger.error(f"API响应内容: {result}")
-                return f"抱歉，{error_msg}"
                 
-        except Exception as e:
-            error_msg = f"调用大模型出错: {str(e)}"
-            logger.error("\n!!! API调用失败 !!!")
-            logger.error(f"错误类型: {type(e).__name__}")
-            logger.error(f"错误信息: {str(e)}")
-            logger.error("详细错误堆栈:")
-            logger.error(traceback.format_exc())
-            return f"抱歉，{error_msg}"
+                # 构建系统提示词
+                logger.info("\n--- 步骤1: 准备提示词 ---")
+                system_prompt = prompt_manager.get_system_prompt()
+
+                # 准备用户提示词
+                # 构建历史对话字符串
+                history_str = ""
+                if user_id and user_id in self.conversation_history:
+                    history = self.conversation_history[user_id]
+                    if history:
+                        for msg in history:
+                            role = "用户" if msg['role'] == 'user' else "助手"
+                            history_str += f"{role}：{msg['content']}\n"
+                
+                # 使用提示词管理器格式化用户提示词
+                user_prompt = prompt_manager.format_user_prompt(
+                    message=message,
+                    context=context or "",
+                    history=history_str
+                )
+                
+                # 添加知识库上下文
+                if context:
+                    user_prompt += f"知识库相关信息：\n{context}\n\n"
+                
+                # 添加当前问题
+                user_prompt += f"用户当前问题：{message}\n\n请基于以上信息生成回答。"
+                
+                # 准备请求数据
+                logger.info("\n--- 步骤2: 准备API请求 ---")
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+                
+                data = {
+                    'model': self.model,
+                    'messages': [
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': user_prompt}
+                    ],
+                    'stream': False,
+                    'max_tokens': 2048,
+                    'temperature': 0.7,
+                    'top_p': 0.7,
+                    'frequency_penalty': 0.5,
+                    'presence_penalty': 0.0
+                }
+                
+                # 打印请求信息
+                logger.info("请求配置:")
+                logger.info(f"API URL: {self.api_url}")
+                logger.info(f"模型名称: {self.model}")
+                logger.info("系统提示词预览:")
+                logger.info(system_prompt)
+                logger.info("用户提示词预览:")
+                prompt_preview = user_prompt[:500] + "..." if len(user_prompt) > 500 else user_prompt
+                logger.info(prompt_preview)
+                
+                # 发送请求
+                logger.info("\n--- 步骤3: 发送API请求 ---")
+                logger.info("正在发送请求...")
+                start_time = time.time()
+                
+                # 添加超时设置
+                response = self.session.post(
+                    self.api_url, 
+                    headers=headers, 
+                    json=data,
+                    timeout=30  # 设置30秒超时
+                )
+                end_time = time.time()
+                
+                # 打印响应信息
+                logger.info("\n--- 步骤4: 处理API响应 ---")
+                logger.info(f"请求耗时: {end_time - start_time:.2f} 秒")
+                logger.info(f"状态码: {response.status_code}")
+                
+                # 检查响应状态
+                if response.status_code == 500:
+                    logger.warning(f"服务器返回500错误，尝试重试 ({attempt + 1}/{max_retries})")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        return "抱歉，服务器暂时无法响应，请稍后再试。"
+                
+                response.raise_for_status()
+                result = response.json()
+                
+                # 获取AI回复
+                ai_response = result['choices'][0]['message']['content']
+                
+                return ai_response
+                
+            except requests.exceptions.Timeout:
+                logger.error(f"请求超时 (尝试 {attempt + 1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                return "抱歉，请求超时，请稍后重试。"
+                
+            except requests.exceptions.RequestException as e:
+                logger.error(f"请求异常 (尝试 {attempt + 1}/{max_retries})")
+                logger.error(f"错误信息: {str(e)}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                return "抱歉，请求失败，请稍后重试。"
+                
+            except Exception as e:
+                logger.error(f"处理请求时出错 (尝试 {attempt + 1}/{max_retries})")
+                logger.error(f"错误类型: {type(e).__name__}")
+                logger.error(f"错误信息: {str(e)}")
+                logger.error("详细错误堆栈:")
+                logger.error(traceback.format_exc())
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                return "抱歉，处理请求时出错，请稍后重试。"
+        
+        return "抱歉，多次尝试后仍然无法获取回复，请稍后重试。"
 
     def send_message(self, message):
         """发送消息"""
@@ -403,24 +465,30 @@ class WeChatBot:
             return False
 
     def extract_message_content(self, message):
-        """从消息对象中提取文本内容和发送者信息"""
+        """提取消息内容"""
         try:
-            logger.info("开始提取消息内容...")
-            # 检查是否是消息对象
-            if hasattr(message, 'content') and hasattr(message, 'sender'):
-                # 获取消息内容和发送者
-                content = message.content
-                sender = message.sender
-                logger.info(f"- 原始发送者: {sender}")
-                logger.info(f"- 原始消息内容: {content}")
-                
-                # 检查消息是否@了auto
-                if '@auto' in content:
-                    logger.info("- 检测到@auto标记")
-                    # 提取@auto后面的实际消息内容
+            content = str(message)
+            sender = None
+            
+            # 尝试获取发送者信息
+            try:
+                if hasattr(message, 'sender'):
+                    sender = message.sender
+                else:
+                    parts = content.split(':', 1)
+                    if len(parts) > 1:
+                        sender = parts[0].strip()
+            except Exception as e:
+                logger.error(f"获取发送者信息失败: {e}")
+            
+            if content:
+                # 检查消息是否包含触发词
+                if self.trigger in content:
+                    logger.info(f"- 检测到{self.trigger}标记")
+                    # 提取触发词后面的实际消息内容
                     try:
                         # 尝试按空格分割获取实际消息
-                        parts = content.split('@auto', 1)
+                        parts = content.split(self.trigger, 1)
                         if len(parts) > 1:
                             actual_message = parts[1].strip()
                             if actual_message:
@@ -434,16 +502,11 @@ class WeChatBot:
                         else:
                             logger.warning("- 无法分割消息内容")
                     except Exception as e:
-                        logger.error(f"- 提取@auto消息内容失败: {e}")
+                        logger.error(f"- 提取{self.trigger}消息内容失败: {e}")
                 else:
-                    logger.info("- 消息未包含@auto标记")
+                    logger.info(f"- 消息未包含{self.trigger}标记")
                 
-                logger.info("消息未@auto或格式不正确，忽略")
-                return None
-                    
-            else:
-                logger.warning(f"未知的消息类型: {type(message)}")
-                logger.debug(f"消息对象的属性: {dir(message)}")
+                logger.info(f"消息未{self.trigger}或格式不正确，忽略")
                 return None
         except Exception as e:
             logger.error(f"提取消息内容时出错: {e}")
@@ -452,26 +515,25 @@ class WeChatBot:
             return None
 
     def monitor_messages(self):
-        """监控并处理新消息"""
+        """监控并处理新消息，支持多轮上下文（5轮），优先查知识库"""
         logger.info("\n=== 开始监听消息 ===")
         logger.info("- 提示：在当前聊天窗口中@auto发送消息来与机器人对话")
-        logger.info("- 提示：每10秒检查一次当前窗口的未读消息")
-        logger.info("- 提示：只处理10分钟内的未读未回复消息")
+        logger.info(f"- 提示：每{self.check_interval}秒检查一次当前窗口的未读消息")
+        logger.info(f"- 提示：只处理{self.message_expire_time}秒内的未读未回复消息")
         logger.info("- 按Ctrl+C可以停止程序\n")
         
-        # 用于存储已处理的消息的哈希值
         processed_hashes = set()
-        last_check_time = time.time()  # 记录上次检查时间
+        last_check_time = time.time()
+        
+        # 从配置文件获取指代词列表
+        pronouns = config.get('chat', 'pronouns').split(',')
+        logger.info(f"已加载指代词列表: {pronouns}")
         
         def get_message_hash(msg_str, sender=None, msg_time=None):
-            """生成消息的唯一标识"""
-            # 提取@auto后面的实际内容
             if '@auto' in msg_str:
                 content = msg_str.split('@auto', 1)[1].strip()
             else:
                 content = msg_str
-            
-            # 组合发送者、内容和时间生成唯一标识
             hash_content = f"{sender}:{content}:{msg_time}" if sender else f"{content}:{msg_time}"
             return hash(hash_content)
         
@@ -479,32 +541,19 @@ class WeChatBot:
             while True:
                 try:
                     current_time = time.time()
-                    
-                    # 每10秒检查一次消息
-                    if current_time - last_check_time < 10:
+                    if current_time - last_check_time < self.check_interval:
                         time.sleep(1)
                         continue
-                    
-                    # 更新检查时间
                     last_check_time = current_time
-                    print(f"\n=== 检查新消息 [{time.strftime('%Y-%m-%d %H:%M:%S')}] ===")
-                    
-                    # 获取当前活动窗口的所有消息
+                    logger.info(f"\n=== 检查新消息 [{time.strftime('%Y-%m-%d %H:%M:%S')}] ===")
                     messages = self.wx.GetAllMessage()
                     if not messages or not isinstance(messages, list):
                         continue
-                    
-                    # 处理消息
-                    for msg in reversed(messages):  # 从最新的消息开始处理
+                    for msg in reversed(messages):
                         try:
-                            # 将消息转换为字符串用于比较
                             msg_str = str(msg)
-                            
-                            # 如果消息不包含@auto，跳过
                             if '@auto' not in msg_str:
                                 continue
-                            
-                            # 获取发送者信息
                             sender = None
                             try:
                                 if hasattr(msg, 'sender'):
@@ -514,10 +563,8 @@ class WeChatBot:
                                     if len(parts) > 1:
                                         sender = parts[0].strip()
                             except Exception as e:
-                                print(f"获取发送者信息失败: {e}")
+                                logger.warning(f"获取发送者信息失败: {e}")
                                 continue
-                            
-                            # 获取消息时间
                             msg_time = None
                             try:
                                 time_match = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', msg_str)
@@ -527,21 +574,13 @@ class WeChatBot:
                                     msg_time = current_time
                             except:
                                 msg_time = current_time
-                            
-                            # 生成消息哈希
                             msg_hash = get_message_hash(msg_str, sender, msg_time)
-                            
-                            # 检查是否已处理过
                             if msg_hash in processed_hashes:
                                 continue
-                            
-                            # 检查消息是否在10分钟内
-                            if current_time - msg_time > 600:  # 600秒 = 10分钟
-                                print(f"跳过超过10分钟的消息")
+                            if current_time - msg_time > self.message_expire_time:
+                                logger.info("跳过超过过期时间的消息")
                                 processed_hashes.add(msg_hash)
                                 continue
-                            
-                            # 检查消息是否已经有回复
                             has_reply = False
                             reply_pattern = f"@{sender}" if sender else None
                             if reply_pattern:
@@ -549,60 +588,77 @@ class WeChatBot:
                                     if reply_pattern in str(reply):
                                         has_reply = True
                                         break
-                            
                             if has_reply:
-                                print(f"跳过已回复的消息")
+                                logger.info("跳过已回复的消息")
                                 processed_hashes.add(msg_hash)
                                 continue
-                            
-                            # 处理新消息
-                            print(f"\n收到新消息: {msg_str}")
-                            print(f"- 消息时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(msg_time))}")
-                            
-                            # 提取@auto后面的实际消息内容
+                            logger.info(f"\n收到新消息: {msg_str}")
+                            logger.info(f"- 消息时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(msg_time))}")
                             actual_message = msg_str.split('@auto', 1)[1].strip()
                             if actual_message:
-                                print(f"- 消息内容: {actual_message}")
-                                print(f"- 发送者: {sender if sender else '未知'}")
+                                logger.info(f"- 消息内容: {actual_message}")
+                                logger.info(f"- 发送者: {sender if sender else '未知'}")
+                                user_id = sender or 'unknown'
+                                if user_id not in self.conversation_history:
+                                    self.conversation_history[user_id] = []
+                                self.conversation_history[user_id].append({'role': 'user', 'content': actual_message})
+                                self.conversation_history[user_id] = self.conversation_history[user_id][-self.max_history_length*2:]
+                                
+                                # 搜索知识库
+                                kb_context = None
+                                try:
+                                    # 使用知识库查询服务进行带上下文的搜索
+                                    search_result = knowledge_query_service.search_with_context(
+                                        query=actual_message,
+                                        user_id=user_id,
+                                        conversation_history=self.conversation_history[user_id],
+                                        pronouns=pronouns
+                                    )
+                                    
+                                    if search_result['success']:
+                                        # 记录搜索结果
+                                        logger.info(f"知识库搜索结果数量: {len(search_result['results'])}")
+                                        for i, result in enumerate(search_result['results'][:self.max_results]):
+                                            logger.info(f"结果 {i+1} (相关度: {result['score']:.4f}): {result['content'][:200]}...")
+                                        
+                                        kb_context = search_result['kb_context']
+                                    else:
+                                        logger.warning(f"知识库检索失败: {search_result.get('error', '未知错误')}")
+                                        
+                                except Exception as e:
+                                    logger.warning(f"知识库检索异常: {e}")
                                 
                                 # 生成回复
-                                response = self.get_ai_response(actual_message)
-                                if response:
-                                    # 在回复前添加@发送者
-                                    if sender:
-                                        full_response = f"@{sender} {response}"
-                                    else:
-                                        full_response = response
-                                        
-                                    print(f"\n生成的回复: {full_response}")
-                                    # 发送回复
-                                    if self.send_message(full_response):
-                                        processed_hashes.add(msg_hash)
+                                response = self._get_llm_response(actual_message, context=kb_context, user_id=user_id)
+                                self.conversation_history[user_id].append({'role': 'assistant', 'content': response})
+                                self.conversation_history[user_id] = self.conversation_history[user_id][-self.max_history_length*2:]
+                                
+                                if sender:
+                                    full_response = f"@{sender} {response}"
                                 else:
-                                    error_msg = f"@{sender} 抱歉，我暂时无法回答这个问题。" if sender else "抱歉，我暂时无法回答这个问题。"
-                                    print(f"\n发送错误提示: {error_msg}")
-                                    if self.send_message(error_msg):
-                                        processed_hashes.add(msg_hash)
-                        
+                                    full_response = response
+                                logger.info(f"\n生成的回复: {full_response}")
+                                if self.send_message(full_response):
+                                    processed_hashes.add(msg_hash)
+                            else:
+                                error_msg = f"@{sender} 抱歉，我暂时无法回答这个问题。" if sender else "抱歉，我暂时无法回答这个问题。"
+                                logger.info(f"\n发送错误提示: {error_msg}")
+                                if self.send_message(error_msg):
+                                    processed_hashes.add(msg_hash)
                         except Exception as e:
-                            print(f"处理消息时出错: {str(e)}")
-                            traceback.print_exc()
+                            logger.error(f"处理消息时出错: {str(e)}")
+                            logger.error(traceback.format_exc())
                             continue
-                    
-                    # 定期清理过期的消息记录
-                    if len(processed_hashes) > 1000:
-                        # 只保留最近10分钟内的消息哈希
+                    if len(processed_hashes) > self.max_processed_hashes:
                         current_time = time.time()
-                        processed_hashes = {h for h in processed_hashes if h > hash(str(current_time - 600))}
-                        print(f"清理消息历史记录，剩余 {len(processed_hashes)} 条记录")
-                    
+                        processed_hashes = {h for h in processed_hashes if h > hash(str(current_time - self.message_expire_time))}
+                        logger.info(f"清理消息历史记录，剩余 {len(processed_hashes)} 条记录")
                 except Exception as e:
-                    print(f"\n获取消息时出错: {str(e)}")
-                    traceback.print_exc()
-                    time.sleep(10)  # 出错后等待10秒再继续
-                
+                    logger.error(f"\n获取消息时出错: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    time.sleep(self.check_interval)
         except KeyboardInterrupt:
-            print("\n收到停止信号，程序退出")
+            logger.info("\n收到停止信号，程序退出")
 
     def handle_message(self, message: str, sender: str) -> str:
         """处理接收到的消息"""
@@ -625,9 +681,10 @@ class WeChatBot:
             # 如果回复为空或者是错误消息，尝试使用大模型
             if not response or "出错" in response:
                 print("\n2. 知识库查询失败，尝试使用大模型...")
-                response = self._get_llm_response(message)
+                response = self._get_llm_response(message, user_id=sender)
             else:
                 print("\n2. 知识库查询成功，使用知识库的回复")
+                response = self._get_llm_response(message, context=response, user_id=sender)
             
             print(f"\n=== 最终回复 ===\n{response}")
             return f"@{sender} {response}"
@@ -636,6 +693,34 @@ class WeChatBot:
             error_msg = f"处理消息时出错: {str(e)}"
             print(f"\n错误：{error_msg}")
             return f"@{sender} 抱歉，{error_msg}"
+
+    def _start_vector_store_watcher(self, interval=30):
+        def watcher():
+            import os
+            import time
+            while True:
+                try:
+                    index_file = f"{self.vector_store_path}.index"
+                    pkl_file = f"{self.vector_store_path}.pkl"
+                    index_mtime = os.path.getmtime(index_file) if os.path.exists(index_file) else None
+                    pkl_mtime = os.path.getmtime(pkl_file) if os.path.exists(pkl_file) else None
+                    changed = []
+                    if index_mtime != self._last_index_mtime:
+                        changed.append(f"index文件: {self._last_index_mtime} -> {index_mtime}")
+                    if pkl_mtime != self._last_pkl_mtime:
+                        changed.append(f"pkl文件: {self._last_pkl_mtime} -> {pkl_mtime}")
+                    if changed:
+                        logger.info("检测到知识库文件变更，自动重新加载向量库... 变动详情: " + "; ".join(changed))
+                        self.vector_store.load(self.vector_store_path)
+                        knowledge_query_service.set_vector_store(self.vector_store)
+                        self._last_index_mtime = index_mtime
+                        self._last_pkl_mtime = pkl_mtime
+                        logger.info("微信端知识库已自动热加载最新内容。")
+                except Exception as e:
+                    logger.error(f"热加载知识库失败: {e}")
+                time.sleep(interval)
+        t = threading.Thread(target=watcher, daemon=True)
+        t.start()
 
 def main():
     try:

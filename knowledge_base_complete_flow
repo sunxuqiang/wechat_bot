@@ -1,0 +1,93 @@
+// Knowledge Base Complete Flow
+digraph {
+	rankdir=TB
+	node [fillcolor=lightblue shape=box style="rounded,filled"]
+	subgraph cluster_0 {
+		label="用户端"
+		A [label="用户"]
+		B [label="Web界面"]
+		C [label="微信客户端"]
+		A -> B [label="上传文档"]
+		A -> C [label="发送消息"]
+	}
+	subgraph cluster_1 {
+		label="后端服务"
+		D [label="Flask/FastAPI服务"]
+		B -> D [label="HTTP请求"]
+		C -> D [label="HTTP请求"]
+		subgraph cluster_2 {
+			label="文档处理"
+			E [label="文档解析器"]
+			E1 [label=PyPDF2]
+			E2 [label="python-docx"]
+			E3 [label=pandas]
+			E4 [label="文本处理器"]
+			D -> E [label="文件解析"]
+			E -> E1 [label="PDF解析"]
+			E -> E2 [label="Word解析"]
+			E -> E3 [label="Excel解析"]
+			E -> E4 [label="文本解析"]
+		}
+		subgraph cluster_3 {
+			label="文本处理"
+			F [label="文本分块器"]
+			G [label="向量化处理器"]
+			H [label="向量存储"]
+			E1 -> F [label="文本分块"]
+			E2 -> F
+			E3 -> F
+			E4 -> F
+			F -> G [label=LangChain]
+			G -> H [label="OpenAI Embeddings"]
+		}
+		subgraph cluster_4 {
+			label="向量存储"
+			I [label="向量数据库"]
+			J [label="检索器"]
+			H -> I [label="FAISS/Chroma"]
+			I -> J [label="相似度搜索"]
+		}
+		subgraph cluster_5 {
+			label="对话处理"
+			K [label="上下文构建器"]
+			L [label="大模型调用器"]
+			M [label="响应生成器"]
+			J -> K [label="相关文档"]
+			K -> L [label="提示词工程"]
+			L -> M [label="GPT-4"]
+		}
+		subgraph cluster_6 {
+			label="缓存层"
+			N [label="Redis缓存"]
+			N -> D [label="缓存查询"]
+			N -> M [label="缓存响应"]
+		}
+	}
+	subgraph cluster_7 {
+		label="响应返回"
+		M -> B [label="HTTP响应"]
+		M -> C [label="HTTP响应"]
+	}
+	subgraph cluster_8 {
+		fillcolor=lightpink label="技术栈" style=filled
+		T1 [label="前端: Vue.js + Element UI"]
+		T2 [label="后端: Flask/FastAPI"]
+		T3 [label="向量化: OpenAI Embeddings"]
+		T4 [label="存储: FAISS/Chroma + Redis"]
+		T5 [label="大模型: GPT-4"]
+	}
+	subgraph cluster_9 {
+		fillcolor=lightblue label="性能优化" style=filled
+		P1 [label="并发处理"]
+		P2 [label="批量向量化"]
+		P3 [label="缓存机制"]
+		P4 [label="异步处理"]
+	}
+	subgraph cluster_10 {
+		fillcolor=lightgreen label="安全措施" style=filled
+		S1 [label="API认证"]
+		S2 [label="请求限流"]
+		S3 [label="敏感信息过滤"]
+		S4 [label="超时控制"]
+	}
+}
