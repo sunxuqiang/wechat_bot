@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信消息查询流程图</title>
+    <script src="./mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            margin: 20px 0;
+        }
+        .details {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .details h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .details ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .details li {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .details strong {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微信消息查询流程图</h1>
+        
+        <div class="mermaid">
+            graph TD
+                %% 定义样式
+                classDef wechat fill:#07C160,stroke:#06AD56,color:white
+                classDef process fill:#50E3C2,stroke:#2BB8A3,color:white
+                classDef decision fill:#F5A623,stroke:#D68910,color:white
+                classDef storage fill:#7ED321,stroke:#5AA700,color:white
+                classDef tech fill:#9013FE,stroke:#6B0FB3,color:white
+                classDef api fill:#FF6B6B,stroke:#EE5253,color:white
+                classDef llm fill:#FF9F43,stroke:#F39C12,color:white
+
+                %% 微信端
+                A[微信用户] -->|发送消息| B[微信服务器]
+                B -->|消息转发| C[itchat/WeChat SDK]
+                
+                %% 消息处理
+                C -->|消息解析| D[消息处理器]
+                D -->|文本预处理| E[文本清洗]
+                E -->|向量化| F[文本向量化]
+                
+                %% 知识库查询
+                F -->|相似度搜索| G[向量数据库查询]
+                G -->|结果排序| H[相似度排序]
+                
+                %% 结果处理
+                H -->|提取相关文本| I[文本提取]
+                I -->|构建提示词| J[提示词工程]
+                J -->|调用大模型| K[OpenAI API调用]
+                
+                %% 大模型处理
+                K -->|生成回答| L[回答生成]
+                L -->|后处理| M[回答优化]
+                
+                %% 响应处理
+                M -->|格式化| N[响应格式化]
+                N -->|发送| O[微信响应]
+                O -->|展示| A
+
+                %% 技术栈标注
+                subgraph 技术实现
+                    P[itchat/WeChat SDK]:::tech
+                    Q[FastAPI/Flask]:::tech
+                    R[OpenAI Embeddings]:::tech
+                    S[FAISS/Chroma]:::tech
+                    T[LangChain]:::tech
+                    U[deepseek-ai/DeepSeek-R1-0528-Qwen3-8B]:::llm
+                    V[提示词模板]:::tech
+                end
+                
+                %% 连接技术栈
+                C -.-> P
+                D -.-> Q
+                F -.-> R
+                G -.-> S
+                E -.-> T
+                K -.-> U
+                J -.-> V
+                
+                %% 应用样式
+                class A,B,O wechat
+                class C,D,E,F,G,H,I,J,K,L,M,N process
+                class P,Q,R,S,T,V tech
+                class U llm
+
+                %% 添加说明
+                subgraph 处理说明
+                    W[向量维度: 1536]
+                    X[相似度阈值: 0.7]
+                    Y[最大返回数: 5]
+                    Z[响应超时: 30s]
+                    AA[模型: deepseek-ai/DeepSeek-R1-0528-Qwen3-8B]
+                    AB[相似度: 0.7]
+                    AC[最大token: 2000]
+                end
+        </div>
+
+        <div class="details">
+            <h2>技术实现细节</h2>
+            <ul>
+                <li>
+                    <strong>微信接入层</strong>
+                    <ul>
+                        <li>使用 itchat/WeChat SDK 实现微信消息接收和发送</li>
+                        <li>支持文本、图片、语音等多种消息类型</li>
+                        <li>实现消息队列和并发处理</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>消息处理层</strong>
+                    <ul>
+                        <li>使用 FastAPI/Flask 构建Web服务</li>
+                        <li>实现消息预处理和清洗</li>
+                        <li>支持多语言处理</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>向量化处理</strong>
+                    <ul>
+                        <li>使用 OpenAI Embeddings 进行文本向量化</li>
+                        <li>向量维度：1536</li>
+                        <li>支持批量处理和缓存机制</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>知识库检索</strong>
+                    <ul>
+                        <li>使用 FAISS/Chroma 进行向量相似度搜索</li>
+                        <li>相似度阈值：0.7</li>
+                        <li>支持多维度相似度计算</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>大模型调用</strong>
+                    <ul>
+                        <li>使用 deepseek-ai/DeepSeek-R1-0528-Qwen3-8B 模型</li>
+                        <li>实现提示词工程和模板管理</li>
+                        <li>支持上下文理解和多轮对话</li>
+                        <li>相似度参数：0.7</li>
+                        <li>最大token限制：2000</li>
+                        <li>实现错误重试和超时控制</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>回答生成与优化</strong>
+                    <ul>
+                        <li>基于检索结果构建提示词</li>
+                        <li>调用大模型生成回答</li>
+                        <li>实现回答质量控制和过滤</li>
+                        <li>支持回答格式化和优化</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>性能优化</strong>
+                    <ul>
+                        <li>实现消息队列和异步处理</li>
+                        <li>使用缓存机制提高响应速度</li>
+                        <li>支持并发请求处理</li>
+                        <li>实现超时控制和错误处理</li>
+                        <li>优化大模型调用成本</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库上传流程图</title>
+    <script src="./mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .mermaid {
+            margin: 20px 0;
+        }
+        .details {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .details h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .details ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .details li {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .details strong {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>知识库上传流程图</h1>
+        
+        <div class="mermaid">
+            graph TD
+                %% 定义样式
+                classDef start fill:#4A90E2,stroke:#2171C7,color:white
+                classDef process fill:#50E3C2,stroke:#2BB8A3,color:white
+                classDef decision fill:#F5A623,stroke:#D68910,color:white
+                classDef storage fill:#7ED321,stroke:#5AA700,color:white
+                classDef tech fill:#9013FE,stroke:#6B0FB3,color:white
+
+                %% 开始
+                A[开始上传] -->|选择文件| B{文件类型检查}
+                
+                %% 文件处理分支
+                B -->|PDF| C[PDF解析器]
+                B -->|Word| D[Word解析器]
+                B -->|Excel| E[Excel解析器]
+                B -->|TXT| F[文本解析器]
+                
+                %% 文本处理
+                C --> G[文本提取]
+                D --> G
+                E --> G
+                F --> G
+                
+                %% 文本预处理
+                G --> H[文本清洗]
+                H --> I[文本分块]
+                
+                %% 向量化处理
+                I --> J[文本向量化]
+                J --> K[向量存储]
+                
+                %% 元数据处理
+                L[提取元数据] --> M[元数据存储]
+                
+                %% 技术栈标注
+                subgraph 技术实现
+                    N[PyPDF2/pdfplumber]:::tech
+                    O[python-docx]:::tech
+                    P[pandas/openpyxl]:::tech
+                    Q[LangChain TextSplitter]:::tech
+                    R[OpenAI Embeddings]:::tech
+                    S[FAISS/Chroma]:::tech
+                    T[SQLite/PostgreSQL]:::tech
+                end
+                
+                %% 连接技术栈
+                C -.-> N
+                D -.-> O
+                E -.-> P
+                I -.-> Q
+                J -.-> R
+                K -.-> S
+                M -.-> T
+                
+                %% 应用样式
+                class A start
+                class B decision
+                class C,D,E,F,G,H,I,J,K,L,M process
+                class N,O,P,Q,R,S,T tech
+
+                %% 添加说明
+                subgraph 处理说明
+                    U[文件大小限制: 10MB]
+                    V[支持格式: PDF/Word/Excel/TXT]
+                    W[分块大小: 512 tokens]
+                    X[向量维度: 1536]
+                end
+        </div>
+
+        <div class="details">
+            <h2>技术实现细节</h2>
+            <ul>
+                <li>
+                    <strong>文件处理</strong>
+                    <ul>
+                        <li>PDF处理：使用 PyPDF2/pdfplumber 进行文本提取</li>
+                        <li>Word处理：使用 python-docx 处理文档</li>
+                        <li>Excel处理：使用 pandas/openpyxl 处理表格数据</li>
+                        <li>文本处理：支持UTF-8编码，处理特殊字符</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>文本处理</strong>
+                    <ul>
+                        <li>文本清洗：去除特殊字符，统一格式</li>
+                        <li>文本分块：使用 LangChain TextSplitter，默认512 tokens</li>
+                        <li>向量化：使用 OpenAI Embeddings，维度1536</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>存储系统</strong>
+                    <ul>
+                        <li>向量存储：使用 FAISS/Chroma 向量数据库</li>
+                        <li>元数据存储：使用 SQLite/PostgreSQL</li>
+                        <li>支持增量更新和版本控制</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html> 

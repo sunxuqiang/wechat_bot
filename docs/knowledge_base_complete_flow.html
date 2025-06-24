@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库完整流程图</title>
+    <script src="./mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .flowcharts {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        .flowchart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .flowchart-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .mermaid {
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .details {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .details h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 2em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .details h3 {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-top: 30px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        .details ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .details li {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .details li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .details strong {
+            color: #3498db;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .details ul ul {
+            margin-left: 20px;
+        }
+        .details ul ul li {
+            background-color: #f8f9fa;
+            margin: 10px 0;
+            padding: 10px;
+        }
+        .details ul ul ul li {
+            background-color: #fff;
+            border-left: 3px solid #3498db;
+            margin: 8px 0;
+            padding: 8px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .tech-item {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .parameters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .parameter-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .parameter-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>知识库完整流程图</h1>
+        
+        <div class="flowcharts">
+            <div class="flowchart-container">
+                <div class="flowchart-title">知识库上传流程</div>
+                <div class="mermaid">
+                    graph TD
+                        %% 定义样式
+                        classDef upload fill:#4A90E2,stroke:#2171C7,color:white,font-size:16px
+                        classDef process fill:#50E3C2,stroke:#2BB8A3,color:white,font-size:16px
+                        classDef decision fill:#F5A623,stroke:#D68910,color:white,font-size:16px
+                        classDef storage fill:#7ED321,stroke:#5AA700,color:white,font-size:16px
+                        classDef tech fill:#9013FE,stroke:#6B0FB3,color:white,font-size:16px
+
+                        %% 知识库上传流程
+                        A1[文档上传] -->|文件验证| B1{文件类型检查}
+                        B1 -->|PDF| C1[PDF解析器]
+                        B1 -->|Word| D1[Word解析器]
+                        B1 -->|Excel| E1[Excel解析器]
+                        B1 -->|TXT| F1[文本解析器]
+                        
+                        C1 --> G1[文本提取]
+                        D1 --> G1
+                        E1 --> G1
+                        F1 --> G1
+                        
+                        G1 --> H1[文本清洗]
+                        H1 --> I1[文本分块]
+                        I1 --> J1[文本向量化]
+                        J1 --> K1[向量存储]
+                        
+                        L1[提取元数据] --> M1[元数据存储]
+
+                        %% 技术栈标注
+                        subgraph 技术实现
+                            T1[PyPDF2/pdfplumber]:::tech
+                            T2[python-docx]:::tech
+                            T3[pandas/openpyxl]:::tech
+                            T4[LangChain TextSplitter]:::tech
+                            T5[OpenAI Embeddings]:::tech
+                            T6[FAISS/Chroma]:::tech
+                            T7[SQLite/PostgreSQL]:::tech
+                        end
+                        
+                        %% 连接技术栈
+                        C1 -.-> T1
+                        D1 -.-> T2
+                        E1 -.-> T3
+                        I1 -.-> T4
+                        J1 -.-> T5
+                        K1 -.-> T6
+                        M1 -.-> T7
+                        
+                        %% 应用样式
+                        class A1,B1,C1,D1,E1,F1,G1,H1,I1,J1,K1,L1,M1 upload
+                        class T1,T2,T3,T4,T5,T6,T7 tech
+                </div>
+            </div>
+
+            <div class="flowchart-container">
+                <div class="flowchart-title">知识库查询流程</div>
+                <div class="mermaid">
+                    graph TD
+                        %% 定义样式
+                        classDef query fill:#07C160,stroke:#06AD56,color:white,font-size:16px
+                        classDef process fill:#50E3C2,stroke:#2BB8A3,color:white,font-size:16px
+                        classDef tech fill:#9013FE,stroke:#6B0FB3,color:white,font-size:16px
+                        classDef llm fill:#FF9F43,stroke:#F39C12,color:white,font-size:16px
+
+                        %% 知识库查询流程
+                        A2[用户查询] -->|文本预处理| B2[查询向量化]
+                        B2 -->|相似度搜索| C2[向量数据库查询]
+                        C2 -->|结果排序| D2[相似度排序]
+                        D2 -->|提取相关文本| E2[文本提取]
+                        E2 -->|构建提示词| F2[提示词工程]
+                        F2 -->|调用大模型| G2[OpenAI API调用]
+                        G2 -->|生成回答| H2[回答生成]
+                        H2 -->|后处理| I2[回答优化]
+                        I2 -->|返回结果| J2[响应返回]
+
+                        %% 技术栈标注
+                        subgraph 技术实现
+                            T8[OpenAI Embeddings]:::tech
+                            T9[FAISS/Chroma]:::tech
+                            T10[deepseek-ai/DeepSeek-R1-0528-Qwen3-8B]:::llm
+                            T11[提示词模板]:::tech
+                            T12[Redis缓存]:::tech
+                        end
+                        
+                        %% 连接技术栈
+                        B2 -.-> T8
+                        C2 -.-> T9
+                        G2 -.-> T10
+                        F2 -.-> T11
+                        
+                        %% 应用样式
+                        class A2,B2,C2,D2,E2,F2,G2,H2,I2,J2 query
+                        class T8,T9,T11,T12 tech
+                        class T10 llm
+                </div>
+            </div>
+        </div>
+
+        <div class="details">
+            <h2>知识库完整流程说明</h2>
+            
+            <div class="section">
+                <h3>一、知识库上传流程</h3>
+                <div class="tech-stack">
+                    <span class="tech-item">PyPDF2/pdfplumber</span>
+                    <span class="tech-item">python-docx</span>
+                    <span class="tech-item">pandas/openpyxl</span>
+                    <span class="tech-item">LangChain</span>
+                    <span class="tech-item">OpenAI Embeddings</span>
+                    <span class="tech-item">FAISS/Chroma</span>
+                    <span class="tech-item">SQLite/PostgreSQL</span>
+                </div>
+
+                <div class="parameters">
+                    <div class="parameter-item">
+                        <strong>文件限制</strong>
+                        最大文件大小：10MB
+                    </div>
+                    <div class="parameter-item">
+                        <strong>分块设置</strong>
+                        默认块大小：512 tokens
+                    </div>
+                    <div class="parameter-item">
+                        <strong>向量维度</strong>
+                        维度大小：1536
+                    </div>
+                </div>
+
+                <ul>
+                    <li>
+                        <strong>1. 文档上传与验证</strong>
+                        <ul>
+                            <li>支持的文件格式：PDF、Word、Excel、TXT</li>
+                            <li>文件大小限制：10MB</li>
+                            <li>文件类型验证：MIME类型检查</li>
+                            <li>文件编码检查：UTF-8支持</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>2. 文档解析</strong>
+                        <ul>
+                            <li>PDF解析：
+                                <ul>
+                                    <li>使用 PyPDF2/pdfplumber 进行文本提取</li>
+                                    <li>支持表格和图片OCR（可选）</li>
+                                    <li>保留文档结构和格式信息</li>
+                                </ul>
+                            </li>
+                            <li>Word解析：
+                                <ul>
+                                    <li>使用 python-docx 处理文档</li>
+                                    <li>提取文本、表格和图片</li>
+                                    <li>保留文档样式信息</li>
+                                </ul>
+                            </li>
+                            <li>Excel解析：
+                                <ul>
+                                    <li>使用 pandas/openpyxl 处理表格</li>
+                                    <li>支持多sheet处理</li>
+                                    <li>保留表格结构和数据类型</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>3. 文本处理</strong>
+                        <ul>
+                            <li>文本清洗：
+                                <ul>
+                                    <li>去除特殊字符和多余空白</li>
+                                    <li>统一文本格式</li>
+                                    <li>处理中英文混排</li>
+                                </ul>
+                            </li>
+                            <li>文本分块：
+                                <ul>
+                                    <li>使用 LangChain TextSplitter</li>
+                                    <li>基于语义和长度进行分块</li>
+                                    <li>默认块大小：512 tokens</li>
+                                    <li>支持重叠分块</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>4. 向量化处理</strong>
+                        <ul>
+                            <li>使用 OpenAI Embeddings：
+                                <ul>
+                                    <li>模型：text-embedding-ada-002</li>
+                                    <li>向量维度：1536</li>
+                                    <li>支持批量处理</li>
+                                    <li>实现错误重试机制</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>5. 存储处理</strong>
+                        <ul>
+                            <li>向量存储：
+                                <ul>
+                                    <li>使用 FAISS/Chroma 向量数据库</li>
+                                    <li>支持增量更新</li>
+                                    <li>实现向量索引优化</li>
+                                </ul>
+                            </li>
+                            <li>元数据存储：
+                                <ul>
+                                    <li>使用 SQLite/PostgreSQL</li>
+                                    <li>存储文档信息、分块信息</li>
+                                    <li>支持版本控制</li>
+                                    <li>实现数据备份</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h3>二、知识库查询流程</h3>
+                <div class="tech-stack">
+                    <span class="tech-item">OpenAI Embeddings</span>
+                    <span class="tech-item">FAISS/Chroma</span>
+                    <span class="tech-item">deepseek-ai/DeepSeek-R1-0528-Qwen3-8B</span>
+                    <span class="tech-item">提示词模板</span>
+                    <span class="tech-item">Redis缓存</span>
+                </div>
+
+                <div class="parameters">
+                    <div class="parameter-item">
+                        <strong>相似度设置</strong>
+                        阈值：0.7，最大返回：5
+                    </div>
+                    <div class="parameter-item">
+                        <strong>模型参数</strong>
+                        GPT-4，相似度：0.7
+                    </div>
+                    <div class="parameter-item">
+                        <strong>Token限制</strong>
+                        最大token：2000
+                    </div>
+                </div>
+
+                <ul>
+                    <li>
+                        <strong>1. 查询处理</strong>
+                        <ul>
+                            <li>文本预处理：
+                                <ul>
+                                    <li>去除特殊字符</li>
+                                    <li>统一格式</li>
+                                    <li>支持多语言</li>
+                                </ul>
+                            </li>
+                            <li>查询向量化：
+                                <ul>
+                                    <li>使用相同的 Embedding 模型</li>
+                                    <li>保持向量维度一致</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>2. 相似度搜索</strong>
+                        <ul>
+                            <li>向量数据库查询：
+                                <ul>
+                                    <li>使用 FAISS/Chroma 进行相似度计算</li>
+                                    <li>相似度阈值：0.7</li>
+                                    <li>最大返回数：5</li>
+                                </ul>
+                            </li>
+                            <li>结果排序：
+                                <ul>
+                                    <li>基于相似度分数排序</li>
+                                    <li>支持多维度相似度计算</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>3. 大模型调用</strong>
+                        <ul>
+                            <li>提示词工程：
+                                <ul>
+                                    <li>使用预定义提示词模板</li>
+                                    <li>动态构建上下文</li>
+                                    <li>支持多轮对话</li>
+                                </ul>
+                            </li>
+                            <li>模型调用：
+                                <ul>
+                                    <li>使用 deepseek-ai/DeepSeek-R1-0528-Qwen3-8B</li>
+                                    <li>温度参数：0.7</li>
+                                    <li>最大token：2000</li>
+                                    <li>实现错误重试机制</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>4. 回答优化</strong>
+                        <ul>
+                            <li>后处理：
+                                <ul>
+                                    <li>格式化和美化</li>
+                                    <li>内容过滤和审核</li>
+                                    <li>敏感信息处理</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h3>三、性能优化</h3>
+                <div class="tech-stack">
+                    <span class="tech-item">Redis缓存</span>
+                    <span class="tech-item">异步处理</span>
+                    <span class="tech-item">并发控制</span>
+                    <span class="tech-item">批量处理</span>
+                </div>
+
+                <ul>
+                    <li>
+                        <strong>1. 缓存机制</strong>
+                        <ul>
+                            <li>使用 Redis 缓存：
+                                <ul>
+                                    <li>缓存常用查询结果</li>
+                                    <li>缓存向量计算结果</li>
+                                    <li>实现缓存更新策略</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>2. 并发处理</strong>
+                        <ul>
+                            <li>异步处理：
+                                <ul>
+                                    <li>使用异步框架处理请求</li>
+                                    <li>实现并发控制</li>
+                                    <li>优化资源使用</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>3. 成本优化</strong>
+                        <ul>
+                            <li>API调用优化：
+                                <ul>
+                                    <li>批量处理请求</li>
+                                    <li>实现请求合并</li>
+                                    <li>优化token使用</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html> 
