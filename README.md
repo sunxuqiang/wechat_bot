@@ -79,7 +79,7 @@ pip install -r requirements.txt
 ### 1. 启动服务
 ```bash
 # 启动Web服务
-python web_interface.py
+python app.py
 
 # 启动微信机器人
 python wechat_bot.py
