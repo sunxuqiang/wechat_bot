@@ -1,0 +1,34 @@
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
+                    <i class="bi bi-house-door"></i>知识库管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'text_blocks_page' else '' }}" href="{{ url_for('text_blocks_page') }}">
+                    <i class="bi bi-file-text"></i>文本块查询
+                </a>
+            </li>
+            {% if current_user.is_admin %}
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'user_management' else '' }}" href="{{ url_for('user_management') }}">
+                    <i class="bi bi-people"></i>用户管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'permission_management' else '' }}" href="{{ url_for('permission_management') }}">
+                    <i class="bi bi-shield-lock"></i>权限管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'prompt_management' else '' }}" href="{{ url_for('prompt_management') }}">
+                    <i class="bi bi-chat-quote"></i>提示词管理
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div> 

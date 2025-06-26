@@ -1,464 +1,326 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户管理 - 本地知识库管理</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
-    <link href="/static/css/sweetalert2.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding-top: 60px; /* 为固定导航栏留出空间 */
-        }
-        .sidebar {
-            position: fixed;
-            top: 60px; /* 从导航栏下方开始 */
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 20px 0 0; /* 减少顶部padding */
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            background-color: #f8f9fa;
-            width: 240px;
-        }
-        .sidebar-sticky {
-            position: relative;
-            top: 0;
-            height: calc(100vh - 80px); /* 调整高度 */
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
-        }
-        .main-content {
-            margin-left: 240px;
-            padding: 20px;
-            margin-top: 0; /* 移除顶部margin */
-        }
-        .nav-link {
-            color: #333;
-            padding: 8px 16px;
-            margin: 4px 0;
-        }
-        .nav-link:hover {
-            background-color: #e9ecef;
-            color: #0d6efd;
-        }
-        .nav-link.active {
-            background-color: #0d6efd;
-            color: white;
-        }
-        .nav-link i {
-            margin-right: 8px;
-        }
-        /* 添加响应式支持 */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                height: auto;
-                margin-bottom: 20px;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-book me-2"></i>本地知识库管理
-            </a>
-            <div class="d-flex">
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
+{% extends "base.html" %}
+
+{% block title %}用户管理 - 本地知识库管理{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .form-check-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .badge {
+        font-size: 0.875em;
+    }
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="container-fluid">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">创建新用户</h5>
+            <form id="createUserForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="username" class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="email" class="form-label">邮箱</label>
+                    <input type="email" class="form-control" id="email">
+                </div>
+                <div class="col-md-4">
+                    <label for="role" class="form-label">角色</label>
+                    <select class="form-select" id="role">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-1"></i>创建用户
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                            <i class="bi bi-box-arrow-right me-2"></i>退出登录
-                        </a></li>
-                    </ul>
                 </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-        <div class="sidebar-sticky">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}">
-                        <i class="bi bi-house-door"></i>知识库管理
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('text_blocks_page') }}">
-                        <i class="bi bi-file-text"></i>文本块查询
-                    </a>
-                </li>
-                {% if current_user.is_admin %}
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('user_management') }}">
-                        <i class="bi bi-people"></i>用户管理
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('permission_management') }}">
-                        <i class="bi bi-shield-lock"></i>权限管理
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
+            </form>
         </div>
     </div>
 
-    <!-- 主要内容区域 -->
-    <main class="main-content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="container-fluid">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">创建新用户</h5>
-                    <form id="createUserForm" class="row g-3">
-                        <div class="col-md-4">
-                            <label for="username" class="form-label">用户名</label>
-                            <input type="text" class="form-control" id="username" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="password" class="form-label">密码</label>
-                            <input type="password" class="form-control" id="password" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="email" class="form-label">邮箱</label>
-                            <input type="email" class="form-control" id="email">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="role" class="form-label">角色</label>
-                            <select class="form-select" id="role">
-                                <option value="user">普通用户</option>
-                                <option value="admin">管理员</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-person-plus me-1"></i>创建用户
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">用户列表</h5>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>用户名</th>
-                                    <th>邮箱</th>
-                                    <th>角色</th>
-                                    <th>创建时间</th>
-                                    <th>最后登录</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="userTableBody">
-                                <!-- 用户列表将通过JavaScript动态加载 -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 修改用户对话框 -->
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">修改用户信息</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editUserForm">
-                        <input type="hidden" id="editUserId">
-                        <input type="hidden" id="editIsAdmin">
-                        <div class="mb-3">
-                            <label for="editEmail" class="form-label">邮箱</label>
-                            <input type="email" class="form-control" id="editEmail">
-                        </div>
-                        <div class="mb-3 admin-only-fields">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editIsAdminCheck">
-                                <label class="form-check-label" for="editIsAdminCheck">
-                                    管理员权限
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editCanUpload">
-                                <label class="form-check-label" for="editCanUpload">
-                                    上传权限
-                                </label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPassword" class="form-label">新密码</label>
-                            <input type="password" class="form-control" id="editPassword">
-                            <small class="text-muted">如果不修改密码请留空</small>
-                        </div>
-                        <div class="mb-3 admin-password-field" style="display: none;">
-                            <label for="currentPassword" class="form-label">当前密码</label>
-                            <input type="password" class="form-control" id="currentPassword">
-                            <small class="text-muted">修改管理员密码需要验证当前密码</small>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUserChanges()">保存</button>
-                </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">用户列表</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>创建时间</th>
+                            <th>最后登录</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <!-- 用户列表将通过JavaScript动态加载 -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="/static/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/sweetalert2.min.js"></script>
-    <script>
-        let editModal;
+<!-- 修改用户对话框 -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改用户信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="editUsername" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">邮箱</label>
+                        <input type="email" class="form-control" id="editEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">新密码（留空则不修改）</label>
+                        <input type="password" class="form-control" id="editPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">角色</label>
+                        <select class="form-select" id="editRole">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // 页面加载时获取用户列表
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
         
-        document.addEventListener('DOMContentLoaded', function() {
-            loadUsers();
-            editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-            
-            // 创建用户表单提交
-            document.getElementById('createUserForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                createUser();
-            });
+        // 绑定创建用户表单提交事件
+        document.getElementById('createUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            createUser();
         });
+    });
 
-        function loadUsers() {
-            fetch('/api/users')
-                .then(response => response.json())
-                .then(users => {
-                    const tbody = document.getElementById('userTableBody');
-                    tbody.innerHTML = '';
-                    users.forEach(user => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${user.username}</td>
-                            <td>${user.email || '-'}</td>
-                            <td>
-                                ${user.is_system_admin ? 
-                                    '<span class="badge bg-danger">系统管理员</span>' :
-                                    user.is_admin ? 
-                                        '<span class="badge bg-warning">管理员</span>' : 
-                                        '<span class="badge bg-secondary">普通用户</span>'
-                                }
-                            </td>
-                            <td>${formatDate(user.created_at)}</td>
-                            <td>${user.last_login ? formatDate(user.last_login) : '从未登录'}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    ${!user.is_system_admin ? `
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('加载用户列表失败');
-                });
-        }
-
-        function editUser(userId) {
-            fetch(`/api/users/${userId}`)
-                .then(response => response.json())
-                .then(user => {
-                    document.getElementById('editUserId').value = user.id;
-                    document.getElementById('editEmail').value = user.email || '';
-                    document.getElementById('editIsAdmin').value = user.is_system_admin;
-                    document.getElementById('editPassword').value = '';
-                    document.getElementById('currentPassword').value = '';
-                    
-                    // 处理系统管理员的特殊情况
-                    if (user.is_system_admin) {
-                        document.querySelectorAll('.admin-only-fields').forEach(el => el.style.display = 'none');
-                        document.querySelector('.admin-password-field').style.display = 'block';
-                    } else {
-                        document.querySelectorAll('.admin-only-fields').forEach(el => el.style.display = 'block');
-                        document.querySelector('.admin-password-field').style.display = 'none';
-                        document.getElementById('editIsAdminCheck').checked = user.is_admin;
-                        document.getElementById('editCanUpload').checked = user.can_upload;
-                    }
-                    
-                    editModal.show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError('加载用户信息失败');
-                });
-        }
-
-        function saveUserChanges() {
-            const userId = document.getElementById('editUserId').value;
-            const isSystemAdmin = document.getElementById('editIsAdmin').value === 'true';
-            const data = {
-                email: document.getElementById('editEmail').value,
-                password: document.getElementById('editPassword').value
-            };
-            
-            if (isSystemAdmin && data.password) {
-                data.current_password = document.getElementById('currentPassword').value;
-                if (!data.current_password) {
-                    showError('修改管理员密码需要验证当前密码');
-                    return;
-                }
-            } else {
-                data.is_admin = document.getElementById('editIsAdminCheck').checked;
-                data.can_upload = document.getElementById('editCanUpload').checked;
-            }
-            
-            fetch(`/api/users/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
+    // 加载用户列表
+    function loadUsers() {
+        fetch('/api/users')
             .then(response => response.json())
-            .then(result => {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-                editModal.hide();
-                loadUsers();
-                Swal.fire({
-                    icon: 'success',
-                    title: '成功',
-                    text: '用户信息已更新'
+            .then(data => {
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = '';
+                
+                data.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.username}</td>
+                        <td>${user.email || '-'}</td>
+                        <td>
+                            <span class="badge ${user.is_admin ? 'bg-danger' : 'bg-secondary'}">
+                                ${user.is_admin ? '管理员' : '普通用户'}
+                            </span>
+                        </td>
+                        <td>${user.created_at || '-'}</td>
+                        <td>${user.last_login || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser('${user.username}')">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </button>
+                            ${user.username !== 'admin' ? 
+                                `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.username}')">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>` : ''
+                            }
+                        </td>
+                    `;
+                    tbody.appendChild(row);
                 });
             })
             .catch(error => {
-                console.error('Error:', error);
-                showError(error.message || '更新用户信息失败');
+                console.error('Error loading users:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: '加载失败',
+                    text: '无法加载用户列表'
+                });
             });
-        }
+    }
 
-        function deleteUser(userId) {
-            Swal.fire({
-                title: '确认删除',
-                text: '确定要删除这个用户吗？此操作不可恢复！',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '确定删除',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/api/users/${userId}`, {
-                        method: 'DELETE'
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.error) {
-                            throw new Error(result.error);
-                        }
-                        loadUsers();
-                        Swal.fire({
-                            icon: 'success',
-                            title: '成功',
-                            text: '用户已删除'
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showError(error.message || '删除用户失败');
-                    });
-                }
-            });
-        }
+    // 创建用户
+    function createUser() {
+        const formData = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            email: document.getElementById('email').value,
+            is_admin: document.getElementById('role').value === 'admin'
+        };
 
-        function createUser() {
-            const data = {
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-                email: document.getElementById('email').value,
-                is_admin: document.getElementById('role').value === 'admin'
-            };
-            
-            fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
+        fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '创建成功',
+                    text: data.message
+                });
                 document.getElementById('createUserForm').reset();
                 loadUsers();
-                Swal.fire({
-                    icon: 'success',
-                    title: '成功',
-                    text: '用户创建成功'
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showError(error.message || '创建用户失败');
-            });
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            return new Date(dateString).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        function showError(message) {
+            } else {
+                throw new Error(data.error || '创建失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating user:', error);
             Swal.fire({
                 icon: 'error',
-                title: '错误',
-                text: message
+                title: '创建失败',
+                text: error.message || '无法创建用户'
             });
-        }
-    </script>
-</body>
-</html> 
+        });
+    }
+
+    // 编辑用户
+    function editUser(username) {
+        // 这里可以添加获取用户详细信息的逻辑
+        document.getElementById('editUserId').value = username;
+        document.getElementById('editUsername').value = username;
+        document.getElementById('editEmail').value = '';
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editRole').value = 'user';
+        
+        new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    }
+
+    // 保存用户修改
+    function saveUserChanges() {
+        const userId = document.getElementById('editUserId').value;
+        const formData = {
+            email: document.getElementById('editEmail').value,
+            password: document.getElementById('editPassword').value,
+            is_admin: document.getElementById('editRole').value === 'admin'
+        };
+
+        fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '更新成功',
+                    text: data.message
+                });
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadUsers();
+            } else {
+                throw new Error(data.error || '更新失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating user:', error);
+            Swal.fire({
+                icon: 'error',
+                title: '更新失败',
+                text: error.message || '无法更新用户信息'
+            });
+        });
+    }
+
+    // 删除用户
+    function deleteUser(username) {
+        Swal.fire({
+            title: '确认删除',
+            text: `确定要删除用户 "${username}" 吗？此操作不可恢复！`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '确定删除',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/users/${username}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '删除成功',
+                            text: data.message
+                        });
+                        loadUsers();
+                    } else {
+                        throw new Error(data.error || '删除失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting user:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: '删除失败',
+                        text: error.message || '无法删除用户'
+                    });
+                });
+            }
+        });
+    }
+</script>
+{% endblock %} 

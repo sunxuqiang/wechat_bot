@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}本地知识库管理{% endblock %}</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/sweetalert2.min.css" rel="stylesheet">
+    
+    <!-- 公共侧边栏样式 -->
+    {% include 'includes/sidebar_styles.html' %}
+    
+    <!-- 页面特定样式 -->
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    {% include 'includes/navbar.html' %}
+
+    <!-- 侧边栏 -->
+    {% include 'includes/sidebar.html' %}
+
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 公共JavaScript -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/sweetalert2.min.js"></script>
+    
+    <!-- 页面特定JavaScript -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html> 

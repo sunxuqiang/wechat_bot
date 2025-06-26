@@ -1,788 +1,673 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文本块查询 - 本地知识库管理</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
-    <link href="/static/css/sweetalert2.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding-top: 60px;
-            background-color: #f8f9fa;
-        }
-        .sidebar {
-            position: fixed;
-            top: 60px;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 20px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            background-color: #f8f9fa;
-            width: 240px;
-        }
-        .sidebar-sticky {
-            position: relative;
-            top: 0;
-            height: calc(100vh - 80px);
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
-            background-color: #fff !important;
-        }
-        .main-content {
-            margin-left: 240px;
-            padding: 20px;
-        }
-        .nav-link {
-            color: #333;
-            padding: 8px 16px;
-            margin: 4px 0;
-        }
-        .nav-link:hover {
-            background-color: #e9ecef;
-            color: #0d6efd;
-        }
-        .nav-link.active {
-            background-color: #0d6efd;
-            color: white;
-        }
-        .nav-link i {
-            margin-right: 8px;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            border-radius: 0.5rem;
-        }
-        .card-header {
-            background-color: #fff;
-            border-bottom: 1px solid rgba(0,0,0,.125);
-            padding: 1rem;
-        }
+{% extends "base.html" %}
+
+{% block title %}文本块查询 - 本地知识库管理{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 0.5rem;
+    }
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        padding: 1rem;
+    }
+    .table {
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
+    .table th {
+        border-top: none;
+        background-color: #f8f9fa;
+        font-weight: 600;
+        padding: 12px 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .text-content {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .source-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .time-badge {
+        background-color: #e3f2fd;
+        color: #0d6efd;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        display: inline-block;
+    }
+    .btn-info {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+        color: #fff;
+    }
+    .btn-info:hover {
+        background-color: #31d2f2;
+        border-color: #25cff2;
+        color: #fff;
+    }
+    .pagination {
+        margin-bottom: 0;
+    }
+    .page-link {
+        color: #0d6efd;
+        border: 1px solid #dee2e6;
+        padding: 0.375rem 0.75rem;
+    }
+    .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .modal-content {
+        border: none;
+        border-radius: 0.5rem;
+    }
+    .modal-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .detail-content {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    /* 增大编辑模态框尺寸 */
+    .modal-xl {
+        max-width: 90%;
+    }
+    /* 增大文本编辑区域 */
+    .edit-textarea {
+        min-height: 300px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    /* 优化按钮间距 */
+    .btn {
+        margin: 0 2px;
+    }
+    /* 优化操作列按钮布局 */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+    /* 增大卡片内边距 */
+    .card-body {
+        padding: 1.5rem;
+    }
+    @media (max-width: 768px) {
         .table {
-            margin-bottom: 0;
-            table-layout: fixed;
+            table-layout: auto;
         }
-        .table th {
-            border-top: none;
-            background-color: #f8f9fa;
-            font-weight: 600;
-            padding: 12px 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .table td {
-            vertical-align: middle;
-            padding: 12px 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .text-content {
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .source-badge {
-            background-color: #e9ecef;
-            color: #495057;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            white-space: nowrap;
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .time-badge {
-            background-color: #e3f2fd;
-            color: #0d6efd;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            white-space: nowrap;
-            display: inline-block;
-        }
-        .btn-info {
-            background-color: #0dcaf0;
-            border-color: #0dcaf0;
-            color: #fff;
-        }
-        .btn-info:hover {
-            background-color: #31d2f2;
-            border-color: #25cff2;
-            color: #fff;
-        }
-        .pagination {
-            margin-bottom: 0;
-        }
-        .page-link {
-            color: #0d6efd;
-            border: 1px solid #dee2e6;
-            padding: 0.375rem 0.75rem;
-        }
-        .page-item.active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-        .modal-content {
-            border: none;
-            border-radius: 0.5rem;
-        }
-        .modal-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .modal-body {
-            padding: 1.5rem;
-        }
-        .detail-content {
-            background-color: #f8f9fa;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        /* 增大编辑模态框尺寸 */
-        .modal-xl {
-            max-width: 90%;
-        }
-        /* 增大文本编辑区域 */
-        .edit-textarea {
-            min-height: 300px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        /* 优化按钮间距 */
-        .btn {
-            margin: 0 2px;
-        }
-        /* 优化操作列按钮布局 */
         .action-buttons {
-            display: flex;
-            gap: 6px;
-            flex-wrap: nowrap;
-            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
         }
         .action-buttons .btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            white-space: nowrap;
+            width: 100%;
+            margin: 0;
         }
-        /* 增大卡片内边距 */
-        .card-body {
-            padding: 1.5rem;
+    }
+    @media (max-width: 1200px) {
+        .table th, .table td {
+            padding: 8px 4px;
         }
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                top: 0;
-                padding: 10px;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
-            .table {
-                table-layout: auto;
-            }
-            .action-buttons {
-                flex-direction: column;
-                gap: 4px;
-            }
-            .action-buttons .btn {
-                width: 100%;
-                margin: 0;
-            }
+        .action-buttons {
+            gap: 4px;
         }
-        @media (max-width: 1200px) {
-            .table th, .table td {
-                padding: 8px 4px;
-            }
-            .action-buttons {
-                gap: 4px;
-            }
-            .action-buttons .btn {
-                padding: 0.2rem 0.4rem;
-                font-size: 0.8rem;
-            }
+        .action-buttons .btn {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
         }
-    </style>
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-book me-2"></i>本地知识库管理
-            </a>
-            <div class="d-flex">
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                            <i class="bi bi-box-arrow-right me-2"></i>退出登录
-                        </a></li>
-                    </ul>
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span>文本块查询</span>
+                    <div>
+                        <button class="btn btn-danger btn-sm me-2" id="batchDeleteBtn" style="display: none;" onclick="batchDelete()">
+                            <i class="bi bi-trash"></i> 批量删除
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="refreshList()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-        <div class="sidebar-sticky">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}">
-                        <i class="bi bi-house-door"></i>知识库管理
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ url_for('text_blocks_page') }}">
-                        <i class="bi bi-file-text"></i>文本块查询
-                    </a>
-                </li>
-                {% if current_user.is_admin %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_management') }}">
-                        <i class="bi bi-people"></i>用户管理
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('permission_management') }}">
-                        <i class="bi bi-shield-lock"></i>权限管理
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-
-    <!-- 主要内容区域 -->
-    <main class="main-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <span>文本块查询</span>
-                            <div>
-                                <button class="btn btn-danger btn-sm me-2" id="batchDeleteBtn" style="display: none;" onclick="batchDelete()">
-                                    <i class="bi bi-trash"></i> 批量删除
-                                </button>
-                                <button class="btn btn-light btn-sm" onclick="refreshList()">
-                                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                <div class="card-body">
+                    <!-- 搜索表单 -->
+                    <form id="searchForm" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="searchText" placeholder="输入要搜索的文本">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> 搜索
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <!-- 搜索表单 -->
-                            <form id="searchForm" class="mb-4">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <input type="text" class="form-control" id="searchText" placeholder="输入要搜索的文本">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="submit" class="btn btn-primary w-100">
-                                            <i class="bi bi-search"></i> 搜索
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                    </form>
 
-                            <!-- 结果列表 -->
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 50px;">
-                                                <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
-                                            </th>
-                                            <th style="width: 80px;">ID</th>
-                                            <th style="width: 40%;">文本内容</th>
-                                            <th style="width: 200px;">来源</th>
-                                            <th style="width: 160px;">创建时间</th>
-                                            <th style="width: 160px;">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="textBlocksList">
-                                        <!-- 文本块列表将通过JavaScript动态加载 -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- 分页控件 -->
-                            <nav aria-label="Page navigation" class="mt-3">
-                                <ul class="pagination justify-content-center" id="pagination">
-                                    <!-- 分页将通过JavaScript动态加载 -->
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 查看详情模态框 -->
-    <div class="modal fade" id="viewDetailsModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">文本块详情</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">文本内容</label>
-                        <div class="detail-content" id="detailContent"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">来源</label>
-                                <div class="border rounded p-2" id="detailSource"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">创建时间</label>
-                                <div class="border rounded p-2" id="detailCreateTime"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 编辑文本块模态框 -->
-    <div class="modal fade" id="editBlockModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">编辑文本块</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <textarea class="form-control edit-textarea" id="editBlockContent" rows="6"></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="saveEditBlockBtn">保存</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/sweetalert2.min.js"></script>
-    <script>
-        let currentPage = 1;
-        const pageSize = 10;
-        let selectedIds = new Set(); // 存储选中的ID
-        let editingBlockId = null;
-
-        // 页面加载完成后加载文本块列表
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTextBlocks();
-            
-            // 添加搜索表单提交事件
-            document.getElementById('searchForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                currentPage = 1;
-                selectedIds.clear();
-                updateBatchDeleteButton();
-                loadTextBlocks();
-            });
-            // 事件委托绑定编辑按钮（base64解码）
-            document.getElementById('textBlocksList').addEventListener('click', function(e) {
-                const btn = e.target.classList.contains('edit-btn') ? e.target : e.target.closest('.edit-btn');
-                if (btn && btn.classList.contains('edit-btn')) {
-                    const id = btn.getAttribute('data-id');
-                    const content = decodeURIComponent(escape(atob(btn.getAttribute('data-content'))));
-                    editBlock(id, content);
-                }
-            });
-        });
-
-        // 加载文本块列表
-        function loadTextBlocks() {
-            const searchText = document.getElementById('searchText').value;
-            const tbody = document.getElementById('textBlocksList');
-            
-            // 显示加载中
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </td>
-                </tr>
-            `;
-
-            // 发起请求
-            fetch(`/api/text_blocks?page=${currentPage}&size=${pageSize}&search=${encodeURIComponent(searchText)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // 渲染文本块列表
-                        let html = '';
-                        data.text_blocks.forEach(block => {
-                            const isChecked = selectedIds.has(block.id) ? 'checked' : '';
-                            html += `
+                    <!-- 结果列表 -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
                                 <tr>
-                                    <td class="text-center">
-                                        <input type="checkbox" class="form-check-input block-checkbox" 
-                                               value="${block.id}" ${isChecked} onchange="toggleSelection(${block.id})">
-                                    </td>
-                                    <td class="text-center">${block.id}</td>
-                                    <td>
-                                        <div class="text-content" title="${block.content}">
-                                            ${block.content}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="source-badge">
-                                            ${block.source || '-'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="time-badge">
-                                            ${block.create_time || '-'}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-info" onclick="viewDetails(${block.id})" title="查看详情">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-primary edit-btn" data-id="${block.id}" data-content="${btoa(unescape(encodeURIComponent(block.content)))}" title="编辑文本">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="deleteBlock(${block.id})" title="删除文本块">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th style="width: 80px;">ID</th>
+                                    <th style="width: 40%;">文本内容</th>
+                                    <th style="width: 200px;">来源</th>
+                                    <th style="width: 160px;">创建时间</th>
+                                    <th style="width: 160px;">操作</th>
                                 </tr>
-                            `;
-                        });
-                        tbody.innerHTML = html || '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+                            </thead>
+                            <tbody id="textBlocksList">
+                                <!-- 文本块列表将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
 
-                        // 更新分页
-                        updatePagination(data.total, data.total_pages);
-                        
-                        // 更新全选状态
-                        updateSelectAllState();
-                    } else {
-                        throw new Error(data.message || '加载失败');
-                    }
-                })
-                .catch(error => {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="text-center text-danger">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                ${error.message || '加载失败'}
-                            </td>
-                        </tr>
-                    `;
-                });
-        }
+                    <!-- 分页控件 -->
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <!-- 分页将通过JavaScript动态加载 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // 切换单个选择
-        function toggleSelection(id) {
-            if (selectedIds.has(id)) {
-                selectedIds.delete(id);
-            } else {
-                selectedIds.add(id);
-            }
-            updateBatchDeleteButton();
-            updateSelectAllState();
-        }
+<!-- 查看详情模态框 -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">文本块详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">文本内容</label>
+                    <div class="detail-content" id="detailContent"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">来源</label>
+                            <div class="border rounded p-2" id="detailSource"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">创建时间</label>
+                            <div class="border rounded p-2" id="detailCreateTime"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // 切换全选
-        function toggleSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.block-checkbox');
-            
-            checkboxes.forEach(checkbox => {
-                const id = parseInt(checkbox.value);
-                if (selectAll.checked) {
-                    selectedIds.add(id);
-                    checkbox.checked = true;
-                } else {
-                    selectedIds.delete(id);
-                    checkbox.checked = false;
-                }
-            });
-            
-            updateBatchDeleteButton();
-        }
+<!-- 编辑文本块模态框 -->
+<div class="modal fade" id="editBlockModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑文本块</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea class="form-control edit-textarea" id="editBlockContent" rows="6"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveEditBlockBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        // 更新全选状态
-        function updateSelectAllState() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.block-checkbox');
-            
-            if (checkboxes.length === 0) {
-                selectAll.checked = false;
-                selectAll.indeterminate = false;
-                return;
-            }
-            
-            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
-            
-            if (checkedCount === 0) {
-                selectAll.checked = false;
-                selectAll.indeterminate = false;
-            } else if (checkedCount === checkboxes.length) {
-                selectAll.checked = true;
-                selectAll.indeterminate = false;
-            } else {
-                selectAll.checked = false;
-                selectAll.indeterminate = true;
-            }
-        }
+{% block extra_scripts %}
+<script>
+    let currentPage = 1;
+    const pageSize = 10;
+    let selectedIds = new Set(); // 存储选中的ID
+    let editingBlockId = null;
 
-        // 更新批量删除按钮状态
-        function updateBatchDeleteButton() {
-            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-            if (selectedIds.size > 0) {
-                batchDeleteBtn.style.display = 'inline-block';
-                batchDeleteBtn.textContent = `批量删除 (${selectedIds.size})`;
-            } else {
-                batchDeleteBtn.style.display = 'none';
-            }
-        }
-
-        // 删除单个文本块
-        function deleteBlock(id) {
-            Swal.fire({
-                title: '确认删除',
-                text: `确定要删除文本块 ID: ${id} 吗？此操作不可恢复！`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: '确定删除',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/api/text_blocks/${id}`, {
-                        method: 'DELETE'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: '删除成功',
-                                text: '文本块已成功删除'
-                            });
-                            selectedIds.delete(id);
-                            updateBatchDeleteButton();
-                            loadTextBlocks();
-                        } else {
-                            throw new Error(data.message || '删除失败');
-                        }
-                    })
-                    .catch(error => {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '删除失败',
-                            text: error.message || '删除失败'
-                        });
-                    });
-                }
-            });
-        }
-
-        // 批量删除
-        function batchDelete() {
-            if (selectedIds.size === 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: '提示',
-                    text: '请先选择要删除的文本块'
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: '确认批量删除',
-                text: `确定要删除选中的 ${selectedIds.size} 个文本块吗？此操作不可恢复！`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: '确定删除',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const ids = Array.from(selectedIds);
-                    
-                    fetch('/api/text_blocks/batch_delete', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ ids: ids })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: '批量删除成功',
-                                text: `成功删除 ${data.deleted_count} 个文本块`
-                            });
-                            selectedIds.clear();
-                            updateBatchDeleteButton();
-                            loadTextBlocks();
-                        } else {
-                            throw new Error(data.message || '批量删除失败');
-                        }
-                    })
-                    .catch(error => {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '批量删除失败',
-                            text: error.message || '批量删除失败'
-                        });
-                    });
-                }
-            });
-        }
-
-        // 更新分页控件
-        function updatePagination(total, totalPages) {
-            const pagination = document.getElementById('pagination');
-            let html = '';
-
-            // 上一页
-            html += `
-                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">上一页</a>
-                </li>
-            `;
-
-            // 页码
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                    html += `
-                        <li class="page-item ${i === currentPage ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
-                        </li>
-                    `;
-                } else if (i === currentPage - 3 || i === currentPage + 3) {
-                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                }
-            }
-
-            // 下一页
-            html += `
-                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">下一页</a>
-                </li>
-            `;
-
-            pagination.innerHTML = html;
-        }
-
-        // 切换页码
-        function changePage(page) {
-            currentPage = page;
-            selectedIds.clear();
-            updateBatchDeleteButton();
-            loadTextBlocks();
-        }
-
-        // 刷新列表
-        function refreshList() {
-            document.getElementById('searchText').value = '';
+    // 页面加载完成后加载文本块列表
+    document.addEventListener('DOMContentLoaded', () => {
+        loadTextBlocks();
+        
+        // 添加搜索表单提交事件
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
             currentPage = 1;
             selectedIds.clear();
             updateBatchDeleteButton();
             loadTextBlocks();
-        }
+        });
+        // 事件委托绑定编辑按钮（base64解码）
+        document.getElementById('textBlocksList').addEventListener('click', function(e) {
+            const btn = e.target.classList.contains('edit-btn') ? e.target : e.target.closest('.edit-btn');
+            if (btn && btn.classList.contains('edit-btn')) {
+                const id = btn.getAttribute('data-id');
+                const content = decodeURIComponent(escape(atob(btn.getAttribute('data-content'))));
+                editBlock(id, content);
+            }
+        });
+    });
 
-        // 查看详情
-        function viewDetails(id) {
-            fetch(`/api/text_blocks/${id}`)
+    // 加载文本块列表
+    function loadTextBlocks() {
+        const searchText = document.getElementById('searchText').value;
+        const tbody = document.getElementById('textBlocksList');
+        
+        // 显示加载中
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        // 发起请求
+        fetch(`/api/text_blocks?page=${currentPage}&size=${pageSize}&search=${encodeURIComponent(searchText)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 渲染文本块列表
+                    let html = '';
+                    data.text_blocks.forEach(block => {
+                        const isChecked = selectedIds.has(block.id) ? 'checked' : '';
+                        html += `
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="form-check-input block-checkbox" 
+                                           value="${block.id}" ${isChecked} onchange="toggleSelection(${block.id})">
+                                </td>
+                                <td class="text-center">${block.id}</td>
+                                <td>
+                                    <div class="text-content" title="${block.content}">
+                                        ${block.content}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="source-badge">
+                                        ${block.source || '-'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="time-badge">
+                                        ${block.create_time || '-'}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-info" onclick="viewDetails(${block.id})" title="查看详情">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-primary edit-btn" data-id="${block.id}" data-content="${btoa(unescape(encodeURIComponent(block.content)))}" title="编辑文本">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteBlock(${block.id})" title="删除文本块">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html || '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+
+                    // 更新分页
+                    updatePagination(data.total, data.total_pages);
+                    
+                    // 更新全选状态
+                    updateSelectAllState();
+                } else {
+                    throw new Error(data.message || '加载失败');
+                }
+            })
+            .catch(error => {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            ${error.message || '加载失败'}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    // 切换单个选择
+    function toggleSelection(id) {
+        if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+        } else {
+            selectedIds.add(id);
+        }
+        updateBatchDeleteButton();
+        updateSelectAllState();
+    }
+
+    // 切换全选
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.block-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            const id = parseInt(checkbox.value);
+            if (selectAll.checked) {
+                selectedIds.add(id);
+                checkbox.checked = true;
+            } else {
+                selectedIds.delete(id);
+                checkbox.checked = false;
+            }
+        });
+        
+        updateBatchDeleteButton();
+    }
+
+    // 更新全选状态
+    function updateSelectAllState() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.block-checkbox');
+        
+        if (checkboxes.length === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+            return;
+        }
+        
+        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        
+        if (checkedCount === 0) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+        } else if (checkedCount === checkboxes.length) {
+            selectAll.checked = true;
+            selectAll.indeterminate = false;
+        } else {
+            selectAll.checked = false;
+            selectAll.indeterminate = true;
+        }
+    }
+
+    // 更新批量删除按钮状态
+    function updateBatchDeleteButton() {
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        if (selectedIds.size > 0) {
+            batchDeleteBtn.style.display = 'inline-block';
+            batchDeleteBtn.textContent = `批量删除 (${selectedIds.size})`;
+        } else {
+            batchDeleteBtn.style.display = 'none';
+        }
+    }
+
+    // 删除单个文本块
+    function deleteBlock(id) {
+        Swal.fire({
+            title: '确认删除',
+            text: `确定要删除文本块 ID: ${id} 吗？此操作不可恢复！`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '确定删除',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/text_blocks/${id}`, {
+                    method: 'DELETE'
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('detailContent').textContent = data.text_block.content;
-                        document.getElementById('detailSource').textContent = data.text_block.source || '-';
-                        document.getElementById('detailCreateTime').textContent = data.text_block.create_time || '-';
-                        new bootstrap.Modal(document.getElementById('viewDetailsModal')).show();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '删除成功',
+                            text: '文本块已成功删除'
+                        });
+                        selectedIds.delete(id);
+                        updateBatchDeleteButton();
+                        loadTextBlocks();
                     } else {
-                        throw new Error(data.message || '加载详情失败');
+                        throw new Error(data.message || '删除失败');
                     }
                 })
                 .catch(error => {
                     Swal.fire({
                         icon: 'error',
-                        title: '错误',
-                        text: error.message || '加载详情失败'
+                        title: '删除失败',
+                        text: error.message || '删除失败'
                     });
                 });
-        }
-
-        // 编辑文本块
-        function editBlock(id, content) {
-            editingBlockId = id;
-            document.getElementById('editBlockContent').value = content;
-            new bootstrap.Modal(document.getElementById('editBlockModal')).show();
-        }
-
-        // 保存编辑后的文本块
-        document.getElementById('saveEditBlockBtn').onclick = function() {
-            const newContent = document.getElementById('editBlockContent').value.trim();
-            if (!newContent) {
-                Swal.fire({icon: 'warning', title: '内容不能为空'});
-                return;
             }
-            fetch(`/api/text_blocks/${editingBlockId}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({content: newContent})
-            })
+        });
+    }
+
+    // 批量删除
+    function batchDelete() {
+        if (selectedIds.size === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: '提示',
+                text: '请先选择要删除的文本块'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: '确认批量删除',
+            text: `确定要删除选中的 ${selectedIds.size} 个文本块吗？此操作不可恢复！`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '确定删除',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const ids = Array.from(selectedIds);
+                
+                fetch('/api/text_blocks/batch_delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: ids })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '批量删除成功',
+                            text: `成功删除 ${data.deleted_count} 个文本块`
+                        });
+                        selectedIds.clear();
+                        updateBatchDeleteButton();
+                        loadTextBlocks();
+                    } else {
+                        throw new Error(data.message || '批量删除失败');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '批量删除失败',
+                        text: error.message || '批量删除失败'
+                    });
+                });
+            }
+        });
+    }
+
+    // 更新分页控件
+    function updatePagination(total, totalPages) {
+        const pagination = document.getElementById('pagination');
+        let html = '';
+
+        // 上一页
+        html += `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">上一页</a>
+            </li>
+        `;
+
+        // 页码
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                html += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // 下一页
+        html += `
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">下一页</a>
+            </li>
+        `;
+
+        pagination.innerHTML = html;
+    }
+
+    // 切换页码
+    function changePage(page) {
+        currentPage = page;
+        selectedIds.clear();
+        updateBatchDeleteButton();
+        loadTextBlocks();
+    }
+
+    // 刷新列表
+    function refreshList() {
+        document.getElementById('searchText').value = '';
+        currentPage = 1;
+        selectedIds.clear();
+        updateBatchDeleteButton();
+        loadTextBlocks();
+    }
+
+    // 查看详情
+    function viewDetails(id) {
+        fetch(`/api/text_blocks/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire({icon: 'success', title: '修改成功', text: '文本块内容已更新'});
-                    bootstrap.Modal.getInstance(document.getElementById('editBlockModal')).hide();
-                    loadTextBlocks();
+                    document.getElementById('detailContent').textContent = data.text_block.content;
+                    document.getElementById('detailSource').textContent = data.text_block.source || '-';
+                    document.getElementById('detailCreateTime').textContent = data.text_block.create_time || '-';
+                    new bootstrap.Modal(document.getElementById('viewDetailsModal')).show();
                 } else {
-                    throw new Error(data.message || '修改失败');
+                    throw new Error(data.message || '加载详情失败');
                 }
             })
             .catch(error => {
-                Swal.fire({icon: 'error', title: '修改失败', text: error.message || '修改失败'});
+                Swal.fire({
+                    icon: 'error',
+                    title: '错误',
+                    text: error.message || '加载详情失败'
+                });
             });
-        };
-    </script>
-</body>
-</html> 
+    }
+
+    // 编辑文本块
+    function editBlock(id, content) {
+        editingBlockId = id;
+        document.getElementById('editBlockContent').value = content;
+        new bootstrap.Modal(document.getElementById('editBlockModal')).show();
+    }
+
+    // 保存编辑后的文本块
+    document.getElementById('saveEditBlockBtn').onclick = function() {
+        const newContent = document.getElementById('editBlockContent').value.trim();
+        if (!newContent) {
+            Swal.fire({icon: 'warning', title: '内容不能为空'});
+            return;
+        }
+        fetch(`/api/text_blocks/${editingBlockId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content: newContent})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({icon: 'success', title: '修改成功', text: '文本块内容已更新'});
+                bootstrap.Modal.getInstance(document.getElementById('editBlockModal')).hide();
+                loadTextBlocks();
+            } else {
+                throw new Error(data.message || '修改失败');
+            }
+        })
+        .catch(error => {
+            Swal.fire({icon: 'error', title: '修改失败', text: error.message || '修改失败'});
+        });
+    };
+</script>
+{% endblock %} 

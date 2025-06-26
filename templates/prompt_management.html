@@ -1,320 +1,284 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>提示词管理 - 知识库系统</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/css/bootstrap-icons.css" rel="stylesheet">
-    <link href="/static/css/sweetalert2.min.css" rel="stylesheet">
-    <style>
-        .prompt-editor {
-            font-family: 'Courier New', monospace;
-            min-height: 400px;
-            resize: vertical;
-        }
-        .config-section {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .config-title {
-            color: #495057;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-        .btn-save {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        .btn-save:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
-        }
-        .btn-reset {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-        .btn-reset:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-    </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- 侧边栏 -->
-            <nav class="col-md-2 d-none d-md-block bg-dark sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/">
-                                <i class="bi bi-house"></i> 首页
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/admin">
-                                <i class="bi bi-gear"></i> 系统管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white active" href="/prompt-management">
-                                <i class="bi bi-chat-quote"></i> 提示词管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/user-management">
-                                <i class="bi bi-people"></i> 用户管理
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" href="/permission-management">
-                                <i class="bi bi-shield-check"></i> 权限管理
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+{% extends "base.html" %}
 
-            <!-- 主内容区 -->
-            <main role="main" class="col-md-10 ml-sm-auto px-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">
-                        <i class="bi bi-chat-quote"></i> 提示词管理
-                    </h1>
-                </div>
+{% block title %}提示词管理 - 知识库系统{% endblock %}
 
-                <!-- 提示词配置区域 -->
-                <div class="config-section">
-                    <h3 class="config-title">
-                        <i class="bi bi-robot"></i> AI分块提示词配置
-                    </h3>
-                    <p class="text-muted mb-3">
-                        配置AI文档分块时使用的提示词。修改后需要重启服务才能生效。
-                    </p>
-                    
-                    <form id="promptForm">
-                        <div class="form-group">
-                            <label for="aiChunkingPrompt" class="form-label">
-                                <strong>AI分块提示词</strong>
-                                <small class="text-muted">(支持 {text} 占位符)</small>
-                            </label>
-                            <textarea 
-                                class="form-control prompt-editor" 
-                                id="aiChunkingPrompt" 
-                                name="ai_chunking_prompt" 
-                                rows="20"
-                                placeholder="请输入AI分块提示词..."></textarea>
-                            <div class="form-text">
-                                <strong>提示词说明：</strong>
-                                <ul class="mt-2">
-                                    <li>使用 {text} 作为待分块文本的占位符</li>
-                                    <li>提示词应该明确指导AI如何进行文档分块</li>
-                                    <li>建议包含JSON格式的输出要求</li>
-                                    <li>修改后需要重启服务才能生效</li>
-                                </ul>
-                            </div>
-                        </div>
+{% block extra_styles %}
+<style>
+    .prompt-editor {
+        font-family: 'Courier New', monospace;
+        min-height: 400px;
+        resize: vertical;
+    }
+    .config-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .config-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    .btn-save {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-save:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    .btn-reset {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-reset:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+</style>
+{% endblock %}
 
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-save">
-                                <i class="bi bi-check-circle"></i> 保存配置
-                            </button>
-                            <button type="button" class="btn btn-reset ml-2" onclick="resetToDefault()">
-                                <i class="bi bi-arrow-clockwise"></i> 重置为默认
-                            </button>
-                            <button type="button" class="btn btn-info ml-2" onclick="previewPrompt()">
-                                <i class="bi bi-eye"></i> 预览效果
-                            </button>
-                        </div>
-                    </form>
-                </div>
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-chat-quote"></i> 提示词管理
+    </h1>
+</div>
 
-                <!-- 配置说明 -->
-                <div class="config-section">
-                    <h3 class="config-title">
-                        <i class="bi bi-info-circle"></i> 配置说明
-                    </h3>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>提示词变量</h5>
-                            <ul>
-                                <li><code>{text}</code> - 待分块的原始文本</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>注意事项</h5>
-                            <ul>
-                                <li>修改配置后需要重启服务</li>
-                                <li>提示词应该明确指定JSON输出格式</li>
-                                <li>建议包含分块规则和示例</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </main>
+<!-- 提示词配置区域 -->
+<div class="config-section">
+    <h3 class="config-title">
+        <i class="bi bi-robot"></i> AI分块提示词配置
+    </h3>
+    <p class="text-muted mb-3">
+        配置AI文档分块时使用的提示词。修改后需要重启服务才能生效。
+    </p>
+    
+    <form id="promptForm">
+        <div class="form-group">
+            <label for="aiChunkingPrompt" class="form-label">
+                <strong>AI分块提示词</strong>
+                <small class="text-muted">(支持 {text} 占位符)</small>
+            </label>
+            <textarea 
+                class="form-control prompt-editor" 
+                id="aiChunkingPrompt" 
+                name="ai_chunking_prompt" 
+                rows="20"
+                placeholder="请输入AI分块提示词..."></textarea>
+            <div class="form-text">
+                <strong>提示词说明：</strong>
+                <ul class="mt-2">
+                    <li>使用 {text} 作为待分块文本的占位符</li>
+                    <li>提示词应该明确指导AI如何进行文档分块</li>
+                    <li>建议包含JSON格式的输出要求</li>
+                    <li>修改后需要重启服务才能生效</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-save">
+                <i class="bi bi-check-circle"></i> 保存配置
+            </button>
+            <button type="button" class="btn btn-reset ml-2" onclick="resetToDefault()">
+                <i class="bi bi-arrow-clockwise"></i> 重置为默认
+            </button>
+            <button type="button" class="btn btn-info ml-2" onclick="previewPrompt()">
+                <i class="bi bi-eye"></i> 预览效果
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 配置说明 -->
+<div class="config-section">
+    <h3 class="config-title">
+        <i class="bi bi-info-circle"></i> 配置说明
+    </h3>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>提示词变量</h5>
+            <ul>
+                <li><code>{text}</code> - 待分块的原始文本</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h5>注意事项</h5>
+            <ul>
+                <li>修改配置后需要重启服务</li>
+                <li>提示词应该明确指定JSON输出格式</li>
+                <li>建议包含分块规则和示例</li>
+            </ul>
         </div>
     </div>
+</div>
 
-    <!-- 预览模态框 -->
-    <div class="modal fade" id="previewModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">提示词预览</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">示例文本：</label>
-                        <textarea class="form-control" id="sampleText" rows="3" readonly>这是一个示例文档。
+<!-- 预览模态框 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">提示词预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">示例文本：</label>
+                    <textarea class="form-control" id="sampleText" rows="3" readonly>这是一个示例文档。
 
 第一章：系统概述
 系统特点包括...
 
 第二章：功能模块
 主要功能有...</textarea>
-                    </div>
-                    <div>
-                        <label class="form-label">生成的提示词：</label>
-                        <pre id="previewContent" class="bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
-                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <div>
+                    <label class="form-label">生成的提示词：</label>
+                    <pre id="previewContent" class="bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script src="/static/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/axios.min.js"></script>
-    <script src="/static/js/sweetalert2.min.js"></script>
-    
-    <script>
-        // 页面加载时获取当前配置
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCurrentConfig();
-        });
+{% block extra_scripts %}
+<script src="/static/js/axios.min.js"></script>
+<script>
+    // 页面加载时获取当前配置
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCurrentConfig();
+    });
 
-        // 加载当前配置
-        function loadCurrentConfig() {
-            axios.get('/api/config/prompt')
-                .then(response => {
-                    if (response.data.success) {
-                        document.getElementById('aiChunkingPrompt').value = response.data.data.ai_chunking_prompt || '';
-                    }
-                })
-                .catch(error => {
-                    console.error('加载配置失败:', error);
+    // 加载当前配置
+    function loadCurrentConfig() {
+        fetch('/api/config/prompt')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('aiChunkingPrompt').value = data.data.ai_chunking_prompt || '';
+                } else {
+                    console.error('Failed to load config:', data.message);
                     Swal.fire({
                         icon: 'error',
                         title: '加载失败',
-                        text: '无法加载当前配置'
+                        text: data.message || '无法加载配置'
                     });
-                });
-        }
-
-        // 保存配置
-        document.getElementById('promptForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {
-                ai_chunking_prompt: formData.get('ai_chunking_prompt')
-            };
-
-            Swal.fire({
-                title: '保存配置',
-                text: '确定要保存这些配置吗？保存后需要重启服务才能生效。',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '保存',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    axios.post('/api/config/prompt', data)
-                        .then(response => {
-                            if (response.data.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: '保存成功',
-                                    text: '配置已保存，请重启服务使配置生效。'
-                                });
-                            } else {
-                                throw new Error(response.data.message || '保存失败');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('保存失败:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: '保存失败',
-                                text: error.response?.data?.message || '保存配置时发生错误'
-                            });
-                        });
                 }
+            })
+            .catch(error => {
+                console.error('Error loading config:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: '加载失败',
+                    text: '无法加载配置，请检查网络连接'
+                });
+            });
+    }
+
+    // 保存配置
+    document.getElementById('promptForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            ai_chunking_prompt: document.getElementById('aiChunkingPrompt').value
+        };
+
+        fetch('/api/config/prompt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '保存成功',
+                    text: '配置已保存，重启服务后生效',
+                    confirmButtonText: '确定'
+                });
+            } else {
+                throw new Error(data.message || '保存失败');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving config:', error);
+            Swal.fire({
+                icon: 'error',
+                title: '保存失败',
+                text: error.message || '无法保存配置'
             });
         });
+    });
 
-        // 重置为默认配置
-        function resetToDefault() {
-            Swal.fire({
-                title: '重置配置',
-                text: '确定要重置为默认配置吗？',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '重置',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    axios.post('/api/config/prompt/reset')
-                        .then(response => {
-                            if (response.data.success) {
-                                document.getElementById('aiChunkingPrompt').value = response.data.data.ai_chunking_prompt;
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: '重置成功',
-                                    text: '已重置为默认配置'
-                                });
-                            } else {
-                                throw new Error(response.data.message || '重置失败');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('重置失败:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: '重置失败',
-                                text: error.response?.data?.message || '重置配置时发生错误'
-                            });
+    // 重置为默认配置
+    function resetToDefault() {
+        Swal.fire({
+            title: '确认重置',
+            text: '确定要重置为默认配置吗？',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '确定重置',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/api/config/prompt/reset', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('aiChunkingPrompt').value = data.data.ai_chunking_prompt || '';
+                        Swal.fire({
+                            icon: 'success',
+                            title: '重置成功',
+                            text: '已重置为默认配置'
                         });
-                }
-            });
-        }
-
-        // 预览提示词效果
-        function previewPrompt() {
-            const prompt = document.getElementById('aiChunkingPrompt').value;
-            const sampleText = document.getElementById('sampleText').value;
-            
-            if (!prompt.trim()) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: '提示词为空',
-                    text: '请先输入提示词'
+                    } else {
+                        throw new Error(data.message || '重置失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting config:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: '重置失败',
+                        text: error.message || '无法重置配置'
+                    });
                 });
-                return;
             }
+        });
+    }
 
-            const previewContent = prompt.replace('{text}', sampleText);
-            document.getElementById('previewContent').textContent = previewContent;
-            
-            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-            modal.show();
+    // 预览提示词效果
+    function previewPrompt() {
+        const prompt = document.getElementById('aiChunkingPrompt').value;
+        const sampleText = document.getElementById('sampleText').value;
+        
+        if (!prompt.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: '提示词为空',
+                text: '请先输入提示词内容'
+            });
+            return;
         }
-    </script>
-</body>
-</html> 
+        
+        // 替换占位符
+        const previewContent = prompt.replace(/{text}/g, sampleText);
+        document.getElementById('previewContent').textContent = previewContent;
+        
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
+    }
+</script>
+{% endblock %} 
