@@ -586,13 +586,10 @@ class FaissVectorStore:
                         # 向量相似度权重降低，关键词匹配权重提高
                         weighted_score = 0.4 * vector_similarity + 0.6 * keyword_match
                         
-                        # 应用更严格的阈值
-                        # 1. 向量相似度必须大于基础阈值
-                        # 2. 关键词匹配必须达到一定程度
-                        # 3. 加权分数必须达到最终阈值
+                        # 恢复原有严格阈值
                         if (vector_similarity >= self.similarity_threshold and 
-                            keyword_match >= 0.3 and  # 调高关键词匹配阈值到30%
-                            weighted_score >= 0.4):  # 调高最终分数阈值到0.4
+                            keyword_match >= 0.3 and  # 关键词匹配阈值30%
+                            weighted_score >= 0.4):  # 最终分数阈值0.4
                             
                             results.append((
                                 text, 
@@ -675,8 +672,14 @@ class FaissVectorStore:
             # 加载索引
             index_path = str(Path(path).with_suffix('.index'))
             if os.path.exists(index_path):
-                self.index = faiss.read_index(index_path)
-                logger.info(f"索引已加载: {index_path}")
+                try:
+                    self.index = faiss.read_index(index_path)
+                    logger.info(f"索引已加载: {index_path}")
+                except Exception as e:
+                    logger.warning(f"索引文件损坏或维度不匹配，重新创建索引: {e}")
+                    # 重新创建索引
+                    dim = self.model.get_sentence_embedding_dimension()
+                    self.index = faiss.IndexFlatL2(dim)
             else:
                 logger.warning(f"索引文件不存在: {index_path}")
                 return
@@ -686,9 +689,44 @@ class FaissVectorStore:
             if os.path.exists(data_path):
                 with open(data_path, 'rb') as f:
                     data = pickle.load(f)
-                self.documents = data['documents']
-                self.document_embeddings = data['document_embeddings']
-                logger.info(f"数据已加载: {data_path}")
+                
+                # 兼容旧的文件格式
+                if 'documents' in data and 'document_embeddings' in data:
+                    # 新格式
+                    self.documents = data['documents']
+                    self.document_embeddings = data['document_embeddings']
+                    logger.info(f"使用新格式加载数据: {data_path}")
+                elif 'texts' in data and 'metadata' in data:
+                    # 旧格式，转换为新格式
+                    texts = data['texts']
+                    metadata_list = data['metadata']
+                    
+                    # 重新生成文档向量
+                    self.documents = []
+                    self.document_embeddings = []
+                    
+                    for i, (text, metadata) in enumerate(zip(texts, metadata_list)):
+                        try:
+                            # 生成文本向量
+                            text_vector = self.encode_text(text)
+                            self.document_embeddings.append(text_vector)
+                            self.documents.append((text, metadata))
+                        except Exception as e:
+                            logger.error(f"处理文档 {i} 时发生错误: {str(e)}")
+                            continue
+                    
+                    # 更新FAISS索引
+                    if self.document_embeddings:
+                        vectors = np.array(self.document_embeddings)
+                        self.index.reset()
+                        self.index.add(vectors.astype('float32'))
+                    
+                    logger.info(f"从旧格式转换并加载数据: {data_path}")
+                    logger.info(f"加载了 {len(self.documents)} 个文档")
+                else:
+                    logger.error(f"不支持的数据格式: {data_path}")
+                    return
+                    
             else:
                 logger.warning(f"数据文件不存在: {data_path}")
                 

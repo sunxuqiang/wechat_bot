@@ -25,7 +25,7 @@ class SearchConfig:
         self.top_k = config.getint('vector_store', 'max_results', fallback=5)
         
         # 微信机器人专用配置
-        self.wechat_max_results = 3  # 微信机器人默认返回3个结果
+        self.wechat_max_results = 10  # 微信机器人默认返回10个结果
         self.wechat_min_score = 0.3  # 微信机器人默认最小分数
         
         # Web界面专用配置

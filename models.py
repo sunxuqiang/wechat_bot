@@ -36,6 +36,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True)
     is_admin = db.Column(db.Boolean, default=False)
     can_upload = db.Column(db.Boolean, default=True)
+    can_download = db.Column(db.Boolean, default=True)
+    can_delete = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 

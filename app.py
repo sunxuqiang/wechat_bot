@@ -605,7 +605,95 @@ def user_management():
 @login_required
 def permission_management():
     """权限管理页面"""
-    return render_template('permission_management.html')
+    if not current_user.is_admin:
+        flash('您没有访问此页面的权限', 'danger')
+        return redirect(url_for('index'))
+    
+    # 获取所有用户
+    users = User.query.all()
+    return render_template('permission_management.html', users=users)
+
+@app.route('/api/permissions', methods=['POST'])
+@login_required
+def update_permissions():
+    """更新用户权限"""
+    if not current_user.is_admin:
+        return jsonify({'error': '没有权限'}), 403
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        username = data.get('username')
+        permission = data.get('permission')
+        value = data.get('value')
+        
+        if not username or permission not in ['upload', 'download', 'delete']:
+            return jsonify({'error': '参数错误'}), 400
+        
+        # 查找用户
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'error': '用户不存在'}), 404
+        
+        # 更新权限
+        if permission == 'upload':
+            user.can_upload = value
+        elif permission == 'download':
+            user.can_download = value
+        elif permission == 'delete':
+            user.can_delete = value
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'用户 {username} 的{permission}权限已更新'
+        })
+        
+    except Exception as e:
+        logger.error(f"更新权限失败: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': f'更新权限失败: {str(e)}'}), 500
+
+@app.route('/api/permissions/reset', methods=['POST'])
+@login_required
+def reset_permissions():
+    """重置用户权限"""
+    if not current_user.is_admin:
+        return jsonify({'error': '没有权限'}), 403
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '请求数据为空'}), 400
+        
+        username = data.get('username')
+        if not username:
+            return jsonify({'error': '用户名不能为空'}), 400
+        
+        # 查找用户
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'error': '用户不存在'}), 404
+        
+        # 重置权限为默认值
+        user.can_upload = True
+        user.can_download = True
+        user.can_delete = False
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'用户 {username} 的权限已重置为默认值'
+        })
+        
+    except Exception as e:
+        logger.error(f"重置权限失败: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': f'重置权限失败: {str(e)}'}), 500
 
 @app.route('/text-blocks')
 @login_required
@@ -780,6 +868,8 @@ def get_users():
         'email': user.email,
         'is_admin': user.is_admin,
         'can_upload': user.can_upload,
+        'can_download': user.can_download,
+        'can_delete': user.can_delete,
         'created_at': user.created_at.isoformat() if user.created_at else None,
         'last_login': user.last_login.isoformat() if user.last_login else None,
         'is_system_admin': user.username == 'admin'  # 添加标识是否为系统管理员
@@ -800,6 +890,8 @@ def manage_user(user_id):
             'email': user.email,
             'is_admin': user.is_admin,
             'can_upload': user.can_upload,
+            'can_download': user.can_download,
+            'can_delete': user.can_delete,
             'is_system_admin': user.username == 'admin'
         })
         
@@ -829,6 +921,10 @@ def manage_user(user_id):
                     user.is_admin = data['is_admin']
                 if 'can_upload' in data:
                     user.can_upload = data['can_upload']
+                if 'can_download' in data:
+                    user.can_download = data['can_download']
+                if 'can_delete' in data:
+                    user.can_delete = data['can_delete']
             
             db.session.commit()
             return jsonify({'message': '用户信息已更新'})
@@ -868,7 +964,9 @@ def create_user():
         username=data['username'],
         email=data.get('email'),
         is_admin=data.get('is_admin', False),
-        can_upload=data.get('can_upload', True)
+        can_upload=data.get('can_upload', True),
+        can_download=data.get('can_download', True),
+        can_delete=data.get('can_delete', False)
     )
     user.set_password(data['password'])
     
@@ -882,7 +980,9 @@ def create_user():
             'username': user.username,
             'email': user.email,
             'is_admin': user.is_admin,
-            'can_upload': user.can_upload
+            'can_upload': user.can_upload,
+            'can_download': user.can_download,
+            'can_delete': user.can_delete
         }
     })
 
@@ -922,6 +1022,160 @@ def update_text_block(block_id):
         logger.error(f"更新文本块失败: {str(e)}")
         logger.error(traceback.format_exc())
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/prompt-management')
+@login_required
+def prompt_management():
+    """提示词管理页面"""
+    return render_template('prompt_management.html')
+
+@app.route('/api/config/prompt', methods=['GET'])
+@login_required
+def get_prompt_config():
+    """获取提示词配置"""
+    try:
+        from config_loader import config
+        prompt_file_path = config.get('api', 'ai_chunking_prompt_file', fallback='prompts/ai_chunking_prompt.txt')
+        
+        try:
+            with open(prompt_file_path, 'r', encoding='utf-8') as f:
+                ai_chunking_prompt = f.read()
+        except FileNotFoundError:
+            ai_chunking_prompt = ""
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'ai_chunking_prompt': ai_chunking_prompt
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取提示词配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'获取配置失败: {str(e)}'
+        }), 500
+
+@app.route('/api/config/prompt', methods=['POST'])
+@login_required
+def save_prompt_config():
+    """保存提示词配置"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': '请求数据为空'
+            }), 400
+        
+        ai_chunking_prompt = data.get('ai_chunking_prompt', '').strip()
+        if not ai_chunking_prompt:
+            return jsonify({
+                'success': False,
+                'message': '提示词不能为空'
+            }), 400
+        
+        # 验证提示词是否包含必要的占位符
+        if '{text}' not in ai_chunking_prompt:
+            return jsonify({
+                'success': False,
+                'message': '提示词必须包含 {text} 占位符'
+            }), 400
+        
+        # 获取提示词文件路径
+        from config_loader import config
+        prompt_file_path = config.get('api', 'ai_chunking_prompt_file', fallback='prompts/ai_chunking_prompt.txt')
+        
+        # 确保目录存在
+        import os
+        os.makedirs(os.path.dirname(prompt_file_path), exist_ok=True)
+        
+        # 保存到文件
+        with open(prompt_file_path, 'w', encoding='utf-8') as f:
+            f.write(ai_chunking_prompt)
+        
+        logger.info(f"提示词配置已保存到: {prompt_file_path}")
+        
+        return jsonify({
+            'success': True,
+            'message': '配置保存成功'
+        })
+        
+    except Exception as e:
+        logger.error(f"保存提示词配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'保存配置失败: {str(e)}'
+        }), 500
+
+@app.route('/api/config/prompt/reset', methods=['POST'])
+@login_required
+def reset_prompt_config():
+    """重置提示词配置为默认值"""
+    try:
+        # 默认提示词
+        default_prompt = """你是一个专业的文档分块专家。请将以下文本严格按照章节结构进行智能分块。
+
+分块要求：
+1. 只在遇到"文档标题"、"第X章"、"结语"这类明确的章节标题时才新建块。
+2. "系统特点"、"功能模块"等内容如果没有"第X章"标题，必须归属于最近的上一章节，不要单独分块。
+3. 每个章节块必须包含该章节标题及其所有内容，直到下一个"第X章"或"结语"标题为止。
+4. 总块数 = 章节数 + 2（标题+结语）
+
+5. 重要规则：
+   - 第一章必须作为一个完整的块，包含"第一章：系统概述"和其后的所有内容（包括"系统特点"等）
+   - 只有遇到"第二章"、"第三章"等新章节标题时才创建新块
+   - 章节内的所有子内容（如"系统特点"、"功能模块"等）都必须包含在同一个块中
+   - 绝对不要将章节内的内容单独分块
+
+6. 块类型说明：
+   - "文档标题"：文档的主标题
+   - "章节"：主要章节内容（包含该章节的所有子内容）
+   - "结语"：文档结尾部分
+
+请严格按照以下JSON格式返回，不要添加任何其他内容：
+
+{{
+    "chunks": [
+        {{
+            "content": "完整的章节内容（包括章节标题和所有子内容）",
+            "type": "块类型（文档标题/章节/结语）",
+            "summary": "该章节的简要描述"
+        }}
+    ]
+}}
+
+待分块文本：
+{text}"""
+        
+        # 获取提示词文件路径
+        from config_loader import config
+        prompt_file_path = config.get('api', 'ai_chunking_prompt_file', fallback='prompts/ai_chunking_prompt.txt')
+        
+        # 确保目录存在
+        import os
+        os.makedirs(os.path.dirname(prompt_file_path), exist_ok=True)
+        
+        # 保存默认提示词到文件
+        with open(prompt_file_path, 'w', encoding='utf-8') as f:
+            f.write(default_prompt)
+        
+        logger.info(f"提示词配置已重置为默认值: {prompt_file_path}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'ai_chunking_prompt': default_prompt
+            },
+            'message': '配置已重置为默认值'
+        })
+        
+    except Exception as e:
+        logger.error(f"重置提示词配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'重置配置失败: {str(e)}'
+        }), 500
 
 def init_db():
     """Initialize the database and create admin user"""

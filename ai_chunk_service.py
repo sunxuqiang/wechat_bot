@@ -25,7 +25,8 @@ class AIChunkService:
         self.api_url = config.get('api', 'url')
         self.api_key = config.get_secret('siliconflow_api_key')
         self.model = config.get('api', 'ai_chunking_model')
-        self.max_tokens = config.getint('api', 'ai_chunking_max_tokens', fallback=2048)
+        self.max_tokens = config.getint('api', 'ai_chunking_max_tokens', fallback=4096)
+        self.max_tokens = min(self.max_tokens, 4096)  # 确保不超过接口最大限制
         self.timeout = config.getint('api', 'ai_chunking_timeout', fallback=600)
         self.max_retries = config.getint('api', 'ai_chunking_max_retries', fallback=3)
         self.retry_delay = config.getint('api', 'ai_chunking_retry_delay', fallback=2)
@@ -45,10 +46,43 @@ class AIChunkService:
         # 获取分块提示词
         self.chunk_prompt = self.prompt_manager.get_ai_chunking_prompt()
         
+        # 新增：SSL配置
+        self.disable_ssl_verification = config.getboolean('security', 'disable_ssl_verification', False)
+        
         logger.info("AI分块服务初始化完成")
         logger.info(f"使用模型: {self.model}")
         logger.info(f"最大重试次数: {self.max_retries}")
         logger.info(f"超时时间: {self.timeout}秒")
+        logger.info(f"SSL验证禁用: {self.disable_ssl_verification}")
+    
+    def _create_session(self):
+        """创建带有SSL配置的requests session"""
+        session = requests.Session()
+        
+        if self.disable_ssl_verification:
+            session.verify = False
+            # 禁用SSL警告
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            logger.debug("SSL验证已禁用")
+        else:
+            session.verify = True
+            logger.debug("SSL验证已启用")
+        
+        # 设置重试策略
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        
+        return session
     
     def _clean_json_response(self, content: str) -> str:
         """
@@ -88,6 +122,56 @@ class AIChunkService:
             content = content[json_start:json_end + 1]
         
         return content
+    
+    def _fix_truncated_json(self, json_str: str) -> str:
+        """
+        修复被截断的JSON字符串
+        
+        Args:
+            json_str: 可能被截断的JSON字符串
+            
+        Returns:
+            str: 修复后的JSON字符串
+        """
+        import re
+        
+        if not json_str:
+            return json_str
+        
+        # 检查是否被截断（缺少结束括号）
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        open_brackets = json_str.count('[')
+        close_brackets = json_str.count(']')
+        
+        # 如果JSON被截断，尝试修复
+        if open_braces > close_braces or open_brackets > close_brackets:
+            logger.warning("检测到JSON被截断，尝试修复")
+            
+            # 分析JSON结构，按正确的顺序添加缺失的括号
+            fixed_json = json_str
+            
+            # 如果最后一个字符是引号，且前面没有逗号，添加逗号
+            if fixed_json.rstrip().endswith('"') and not fixed_json.rstrip().endswith('",'):
+                # 检查是否需要添加逗号
+                last_comma = fixed_json.rfind(',')
+                last_quote = fixed_json.rfind('"')
+                if last_comma == -1 or last_comma < last_quote:
+                    # 在最后一个引号后添加逗号
+                    fixed_json = fixed_json.rstrip() + '",'
+            
+            # 添加缺失的结束括号，按照嵌套顺序添加
+            missing_braces = open_braces - close_braces
+            missing_brackets = open_brackets - close_brackets
+            
+            # 先添加方括号，再添加大括号（因为数组通常在对象内部）
+            fixed_json += ']' * missing_brackets + '}' * missing_braces
+            
+            logger.info(f"JSON修复完成，添加了 {missing_braces} 个大括号和 {missing_brackets} 个方括号")
+            
+            return fixed_json
+        
+        return json_str
     
     def _fix_json_format(self, json_str: str) -> str:
         """
@@ -200,23 +284,15 @@ class AIChunkService:
         merged_chunk = {
             'content': merged_content.strip(),
             'type': merged_type,
-            'summary': '；'.join(merged_summary) or '第一章内容'
+            'summary': '；'.join(merged_summary) if merged_summary else '第一章相关内容'
         }
-        # 构建最终块列表
-        inserted = False
+        # 将合并后的块放在开头，其他块保持不变
+        result = [merged_chunk]
         for i, chunk in enumerate(chunks):
-            if i == chapter1_indices[0]:
-                merged_chunks.append(merged_chunk)
-                inserted = True
-            elif i in chapter1_indices:
-                continue
-            else:
-                merged_chunks.append(chunk)
-        # 如果没有插入，直接加到最前面
-        if not inserted:
-            merged_chunks.insert(0, merged_chunk)
-        return merged_chunks
-    
+            if i not in chapter1_indices:
+                result.append(chunk)
+        return result
+
     def chunk_with_ai(self, text: str) -> Optional[List[Dict[str, Any]]]:
         """
         使用AI模型进行智能分块
@@ -285,15 +361,15 @@ class AIChunkService:
                     "presence_penalty": self.presence_penalty
                 }
                 logger.debug("已构建请求参数")
-                logger.debug(f"请求参数: {request_data}")
+                logger.debug(f"请求参数: model={self.model}, max_tokens={request_data['max_tokens']}, temperature={request_data['temperature']}")
                 
                 logger.info(f"准备发送请求到AI服务: {url}")
-                logger.info(f"请求参数: model={self.model}, max_tokens={request_data['max_tokens']}, temperature={request_data['temperature']}")
                 
-                # 发送请求
+                # 创建session并发送请求
+                session = self._create_session()
                 start_time = time.time()
                 try:
-                    response = requests.post(
+                    response = session.post(
                         url,
                         headers=headers,
                         json=request_data,
@@ -311,11 +387,6 @@ class AIChunkService:
                 logger.info(f"AI服务响应时间: {end_time - start_time:.2f}秒")
                 logger.info(f"AI服务响应状态码: {response.status_code}")
                 
-                try:
-                    logger.debug(f"AI原始response.text: {response.text}")
-                except Exception as e_text:
-                    logger.error(f"无法获取response.text: {str(e_text)}")
-                
                 if response.status_code != 200:
                     logger.error(f"AI服务返回错误状态码: {response.status_code}")
                     try:
@@ -330,7 +401,7 @@ class AIChunkService:
                 # 解析响应
                 try:
                     response_data = response.json()
-                    logger.debug(f"已解析response.json(): {response_data}")
+                    logger.debug(f"已解析response.json()")
                 except Exception as e_json:
                     logger.error(f"response.json() 解析失败: {str(e_json)}")
                     try:
@@ -362,6 +433,9 @@ class AIChunkService:
                 content_extracted = extract_json(content)
                 logger.info(f"AI响应内容（自动提取JSON后）长度: {len(content_extracted)} 字符")
                 logger.info(f"AI响应内容（自动提取JSON后）前500字符: {content_extracted[:500]}")
+                
+                # 新增：检查并修复截断的JSON
+                content_extracted = self._fix_truncated_json(content_extracted)
                 
                 # 清理和解析JSON响应
                 try:

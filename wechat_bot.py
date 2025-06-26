@@ -207,6 +207,17 @@ class WeChatBot:
         self.message_expire_time = config.getint('chat', 'message_expire_time')
         self.max_processed_hashes = config.getint('chat', 'max_processed_hashes')
         
+        # 从配置文件加载微信机器人专用配置
+        self.wechat_max_retries = config.getint('chat', 'wechat_max_retries')
+        self.wechat_retry_delay = config.getint('chat', 'wechat_retry_delay')
+        self.wechat_max_tokens = config.getint('chat', 'wechat_max_tokens')
+        self.wechat_temperature = config.getfloat('chat', 'wechat_temperature')
+        self.wechat_top_p = config.getfloat('chat', 'wechat_top_p')
+        self.wechat_frequency_penalty = config.getfloat('chat', 'wechat_frequency_penalty')
+        self.wechat_presence_penalty = config.getfloat('chat', 'wechat_presence_penalty')
+        self.wechat_timeout = config.getint('chat', 'wechat_timeout')
+        self.wechat_vector_store_watch_interval = config.getint('chat', 'wechat_vector_store_watch_interval')
+        
         # 从配置文件加载向量存储配置
         self.chunk_size = config.getint('vector_store', 'chunk_size')
         self.chunk_overlap = config.getint('vector_store', 'chunk_overlap')
@@ -225,6 +236,14 @@ class WeChatBot:
         logger.info(f"最大历史长度: {self.max_history_length}")
         logger.info(f"检查间隔: {self.check_interval}秒")
         logger.info(f"消息过期时间: {self.message_expire_time}秒")
+        logger.info(f"微信机器人配置:")
+        logger.info(f"  最大重试次数: {self.wechat_max_retries}")
+        logger.info(f"  重试延迟: {self.wechat_retry_delay}秒")
+        logger.info(f"  最大Token数: {self.wechat_max_tokens}")
+        logger.info(f"  温度参数: {self.wechat_temperature}")
+        logger.info(f"  Top-p参数: {self.wechat_top_p}")
+        logger.info(f"  请求超时: {self.wechat_timeout}秒")
+        logger.info(f"  知识库监控间隔: {self.wechat_vector_store_watch_interval}秒")
         
     def init_knowledge_base(self):
         """初始化知识库"""
@@ -321,8 +340,8 @@ class WeChatBot:
 
     def _get_llm_response(self, message: str, context: str = None, user_id: str = None) -> str:
         """调用大模型生成回复"""
-        max_retries = 3
-        retry_delay = 2  # 重试延迟秒数
+        max_retries = self.wechat_max_retries
+        retry_delay = self.wechat_retry_delay
         
         for attempt in range(max_retries):
             try:
@@ -372,11 +391,11 @@ class WeChatBot:
                         {'role': 'user', 'content': user_prompt}
                     ],
                     'stream': False,
-                    'max_tokens': 2048,
-                    'temperature': 0.7,
-                    'top_p': 0.7,
-                    'frequency_penalty': 0.5,
-                    'presence_penalty': 0.0
+                    'max_tokens': self.wechat_max_tokens,
+                    'temperature': self.wechat_temperature,
+                    'top_p': self.wechat_top_p,
+                    'frequency_penalty': self.wechat_frequency_penalty,
+                    'presence_penalty': self.wechat_presence_penalty
                 }
                 
                 # 打印请求信息
@@ -399,7 +418,7 @@ class WeChatBot:
                     self.api_url, 
                     headers=headers, 
                     json=data,
-                    timeout=30  # 设置30秒超时
+                    timeout=self.wechat_timeout
                 )
                 end_time = time.time()
                 
@@ -618,7 +637,7 @@ class WeChatBot:
                                     if search_result['success']:
                                         # 记录搜索结果
                                         logger.info(f"知识库搜索结果数量: {len(search_result['results'])}")
-                                        for i, result in enumerate(search_result['results'][:self.max_results]):
+                                        for i, result in enumerate(search_result['results']):
                                             logger.info(f"结果 {i+1} (相关度: {result['score']:.4f}): {result['content'][:200]}...")
                                         
                                         kb_context = search_result['kb_context']
@@ -694,10 +713,12 @@ class WeChatBot:
             print(f"\n错误：{error_msg}")
             return f"@{sender} 抱歉，{error_msg}"
 
-    def _start_vector_store_watcher(self, interval=30):
+    def _start_vector_store_watcher(self, interval=None):
         def watcher():
             import os
             import time
+            # 使用配置文件中的间隔，如果没有提供参数
+            watch_interval = interval or self.wechat_vector_store_watch_interval
             while True:
                 try:
                     index_file = f"{self.vector_store_path}.index"
@@ -718,7 +739,7 @@ class WeChatBot:
                         logger.info("微信端知识库已自动热加载最新内容。")
                 except Exception as e:
                     logger.error(f"热加载知识库失败: {e}")
-                time.sleep(interval)
+                time.sleep(watch_interval)
         t = threading.Thread(target=watcher, daemon=True)
         t.start()
 
